@@ -133,18 +133,6 @@ Create a premium, professional insurance website for a company that handles:
   Do not add unnecessary pages.
   Focus on making this landing page look highly polished and production-ready.
 
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://insurex-prime.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/1c6b35b8-1f03-4464-9212-6b71760d89fc).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
 
 Prefer working locally? You need Node.js and pnpm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
