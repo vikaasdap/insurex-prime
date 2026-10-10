@@ -10,6 +10,15 @@ const floater = (sumInsured: number): CategoryDetails => ({
   ageEligibility: "",
 });
 
+const motor = (vehicleType: "PRIVATE_CAR" | "TWO_WHEELER"): CategoryDetails => ({
+  kind: "MOTOR",
+  vehicleType,
+  coverageType: "COMPREHENSIVE",
+  ownDamage: "",
+  thirdPartyCoverage: "",
+  vehicleEligibility: "",
+});
+
 /**
  * TATA AIG health plans (the MediCare range), split the way the insurer's portal filters
  * them: Indemnity and Deductible. Premiums on the portal depend on the insured's age and
@@ -73,6 +82,23 @@ export const tataAigTemplate: CatalogTemplate = [
             ],
           },
         ],
+      },
+    ],
+  },
+  {
+    line: "MOTOR",
+    policies: [
+      {
+        name: "Two Wheeler",
+        description: "Two wheeler insurance. The premium is entered when a sale is recorded.",
+        durationMonths: 12,
+        categoryDetails: motor("TWO_WHEELER"),
+      },
+      {
+        name: "Four Wheeler",
+        description: "Four wheeler (private car) insurance. The premium is entered when a sale is recorded.",
+        durationMonths: 12,
+        categoryDetails: motor("PRIVATE_CAR"),
       },
     ],
   },
