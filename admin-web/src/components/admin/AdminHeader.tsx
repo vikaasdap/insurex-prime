@@ -1,5 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
-import { Bell, CheckCircle2, Download, Menu, Shield } from "lucide-react";
+import { Bell, CheckCircle2, Menu, Shield } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,9 @@ const PAGE_TITLES: Record<string, string> = {
 
 export interface AdminHeaderProps {
   onToggleSidebar?: () => void;
-  onOpenExport?: () => void;
 }
 
-export function AdminHeader({ onToggleSidebar, onOpenExport }: AdminHeaderProps) {
+export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
   const { data: me } = useCurrentUser();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const pageTitle = PAGE_TITLES[pathname.replace(/\/$/, "")] ?? "Admin";
@@ -53,16 +52,6 @@ export function AdminHeader({ onToggleSidebar, onOpenExport }: AdminHeaderProps)
 
   const mobileBar = (
     <MobileTopBar eyebrow={me?.tenant?.name ?? "InsuroX Prime"} title={pageTitle}>
-      {isTenantAdmin && onOpenExport && (
-        <button
-          type="button"
-          onClick={onOpenExport}
-          aria-label="Export data"
-          className={mobileIconButton}
-        >
-          <Download className="size-[22px]" />
-        </button>
-      )}
       <Popover>
         <PopoverTrigger asChild>
           <button type="button" className={mobileIconButton} aria-label="Open notifications">
@@ -158,20 +147,8 @@ export function AdminHeader({ onToggleSidebar, onOpenExport }: AdminHeaderProps)
           </div>
         </div>
 
-        {/* Right: Export, Notifications, Admin Profile */}
+        {/* Right: Notifications, Admin Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Visible Export Button */}
-          <Button
-            type="button"
-            onClick={onOpenExport}
-            variant="outline"
-            size="sm"
-            className="h-9 rounded-xl border-border bg-background px-3 font-semibold text-xs shadow-xs hover:bg-muted cursor-pointer flex items-center gap-1.5"
-          >
-            <Download className="size-3.5 text-primary" />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-
           <ThemeToggle />
 
           {/* Notification Popover */}

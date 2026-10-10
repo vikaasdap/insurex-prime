@@ -97,13 +97,6 @@ export const formatPolicyDuration = (months: number): string => {
   return `${months} months`;
 };
 
-// Only active products may be offered to agents for new sales.
-export const getAgentAvailablePolicies = (policies: PolicyProduct[]): PolicyProduct[] =>
-  policies.filter((policy) => policy.status === "Active");
-
-export const findPolicyById = (policies: PolicyProduct[], id: string): PolicyProduct | undefined =>
-  policies.find((policy) => policy.id === id);
-
 const standardHealthTerms =
   "Pre-existing diseases covered after the waiting period. Claims are subject to policy wording and network hospital rules.";
 const standardMotorTerms =

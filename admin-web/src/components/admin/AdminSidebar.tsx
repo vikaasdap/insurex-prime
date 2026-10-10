@@ -8,7 +8,6 @@ import {
   Building2,
   Layers,
   FileCheck2,
-  FileSpreadsheet,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -26,14 +25,9 @@ export interface AdminSidebarProps {
   currentPath?: string;
   isOpen?: boolean;
   onClose?: () => void;
-  onOpenExport?: () => void;
 }
 
-export function AdminSidebar({
-  currentPath = "/admin/dashboard",
-  onClose,
-  onOpenExport,
-}: AdminSidebarProps) {
+export function AdminSidebar({ currentPath = "/admin/dashboard", onClose }: AdminSidebarProps) {
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
   const { signOut: handleLogout, isSigningOut: isLoggingOut } = useAdminSignOut();
 
@@ -52,22 +46,9 @@ export function AdminSidebar({
     { label: "Policies", href: "/admin/policies", icon: Shield },
     { label: "Sold Policies", href: "/admin/sold-policies", icon: ShoppingBag },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-    {
-      label: "Export",
-      href: "#export",
-      icon: FileSpreadsheet,
-      isAction: true,
-      onClick: () => {
-        if (onOpenExport) onOpenExport();
-        if (onClose) onClose();
-      },
-    },
     { label: "Settings", href: "/admin/settings", icon: Settings },
   ];
-  const navItems: ((typeof tenantItems)[number] & {
-    isAction?: boolean;
-    onClick?: () => void;
-  })[] = isPlatform ? platformItems : tenantItems;
+  const navItems = isPlatform ? platformItems : tenantItems;
 
   const byLabel = (label: string) => navItems.find((item) => item.label === label);
   const toMobile = (labels: string[]): MobileNavItem[] =>
@@ -78,7 +59,7 @@ export function AdminSidebar({
             {
               label: item.label,
               icon: item.icon,
-              ...(item.isAction ? { onClick: item.onClick } : { href: item.href }),
+              href: item.href,
             },
           ]
         : [];
@@ -88,7 +69,7 @@ export function AdminSidebar({
     : toMobile(["Dashboard", "Policies", "Agents", "Reports"]);
   const mobileMore = isPlatform
     ? []
-    : toMobile(["Customers", "Catalog", "Sold Policies", "Export", "Settings"]);
+    : toMobile(["Customers", "Catalog", "Sold Policies", "Settings"]);
 
   const renderContent = (compact: boolean) => (
     <div className="flex h-full flex-col justify-between overflow-x-hidden bg-background text-foreground border-r border-border/80">
@@ -139,22 +120,6 @@ export function AdminSidebar({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPath === item.href;
-
-              if (item.isAction) {
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={item.onClick}
-                    title={compact ? item.label : undefined}
-                    aria-label={item.label}
-                    className={`flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer text-left ${compact ? "justify-center px-0" : "px-3.5"}`}
-                  >
-                    <Icon className="size-4 shrink-0" />
-                    {!compact && <span>{item.label}</span>}
-                  </button>
-                );
-              }
 
               return (
                 <Link

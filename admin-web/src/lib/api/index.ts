@@ -36,7 +36,6 @@ export { tenantProfileApi, tenantProfileKey, type TenantProfile } from "./tenant
 export { customersApi, type CustomerInput, type CustomerListParams } from "./customers";
 export { dashboardApi, reportsApi } from "./dashboard";
 export { policiesApi, type PolicyListParams } from "./policies";
-export { receiptsApi, type ReceiptListParams } from "./receipts";
 export { settingsApi } from "./settings";
 export { soldPoliciesApi, type SalePolicyInput, type SoldPolicyListParams } from "./sold-policies";
 export type * from "./settings";

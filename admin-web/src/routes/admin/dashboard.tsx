@@ -12,7 +12,6 @@ import { AdminQuickActions } from "@/components/admin/AdminQuickActions";
 import { AdminPolicySummary } from "@/components/admin/AdminPolicySummary";
 import { AdminAgentPerformanceTable } from "@/components/admin/AdminAgentPerformanceTable";
 import { AdminRecentSalesTable } from "@/components/admin/AdminRecentSalesTable";
-import { AdminExportModal } from "@/components/admin/AdminExportModal";
 import { AdminActionModals, type ModalType } from "@/components/admin/AdminActionModals";
 import {
   formatINR,
@@ -67,9 +66,6 @@ function toKpiStats(summary: DashboardSummary | undefined, label: string): KpiSt
 function SuperAdminDashboard() {
   // Mobile sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Export modal state
-  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   // Quick action modal state
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -170,16 +166,12 @@ function SuperAdminDashboard() {
         currentPath="/admin/dashboard"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onOpenExport={() => setExportModalOpen(true)}
       />
 
       {/* Main Wrapper (shifted left on desktop for fixed sidebar) */}
       <div className="app-shell-pad flex flex-col min-h-screen">
         {/* Top Header */}
-        <AdminHeader
-          onToggleSidebar={() => setSidebarOpen(true)}
-          onOpenExport={() => setExportModalOpen(true)}
-        />
+        <AdminHeader onToggleSidebar={() => setSidebarOpen(true)} />
 
         {/* Dashboard Content Container */}
         <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col space-y-6 p-4 sm:p-6 lg:p-8">
@@ -215,7 +207,6 @@ function SuperAdminDashboard() {
               onOpenAddAgent={() => setActiveModal("add_agent")}
               onOpenAddPolicy={() => setActiveModal("add_policy")}
               onOpenGenerateReport={() => setActiveModal("generate_report")}
-              onOpenExport={() => setExportModalOpen(true)}
             />
           </div>
 
@@ -233,9 +224,6 @@ function SuperAdminDashboard() {
         </main>
         <AdminFooter />
       </div>
-
-      {/* Export Data Modal */}
-      <AdminExportModal isOpen={exportModalOpen} onClose={() => setExportModalOpen(false)} />
 
       {/* Action Dialogs (Add Agent, Customer, Policy, Report) */}
       <AdminActionModals modalType={activeModal} onClose={() => setActiveModal(null)} />

@@ -21,7 +21,7 @@ export interface AgentFull {
   status: "Active" | "Inactive";
   joinDate: string; // ISO date string "YYYY-MM-DD"
   rating: number;
-  specialization: "Health" | "Motor" | "Both" | "All";
+  specialization: "Health" | "Motor" | "Life" | "Both" | "All";
   region: string;
   recentPolicies?: RecentPolicySale[];
   activity?: AgentActivity[];
@@ -363,7 +363,3 @@ export const agentPoliciesChartData = agentsFullList
     policiesSold: a.policiesSold,
     premiumGenerated: a.premiumGenerated,
   }));
-
-// ─── Find agent by ID helper ──────────────────────────────────────────────────
-export const findAgentById = (id: string): AgentFull | undefined =>
-  agentsFullList.find((a) => a.id === id);

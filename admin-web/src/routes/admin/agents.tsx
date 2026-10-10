@@ -65,7 +65,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AdminExportModal } from "@/components/admin/AdminExportModal";
 import { requireAdminSession } from "@/lib/admin-route-guard";
 import { formatINR } from "@/components/admin/admin-mock-data";
 import {
@@ -104,6 +103,7 @@ const STATUS_COLORS = {
 const SPEC_COLORS = {
   Health: "bg-primary/10 text-primary border-primary/20",
   Motor: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+  Life: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
   Both: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
   All: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
 };
@@ -208,7 +208,7 @@ interface AgentFormData {
   joinDate: string;
   status: "Active" | "Inactive";
   tempPassword: string;
-  specialization: "Health" | "Motor" | "Both" | "All";
+  specialization: "Health" | "Motor" | "Life" | "Both" | "All";
   region: string;
 }
 
@@ -314,7 +314,6 @@ function AgentFormModal({ mode, initial = emptyForm, onClose, onSubmit }: AgentF
                 onChange={(e) => set("code", e.target.value)}
                 placeholder={isAdd ? "Auto-generated if left empty" : "e.g. AGT-11"}
                 className="mt-1 h-10 rounded-xl"
-                disabled={!isAdd}
               />
             </div>
           </div>
@@ -406,6 +405,7 @@ function AgentFormModal({ mode, initial = emptyForm, onClose, onSubmit }: AgentF
               >
                 <option value="Health">Health Insurance</option>
                 <option value="Motor">Motor Insurance</option>
+                <option value="Life">Life Insurance</option>
                 <option value="Both">Both</option>
                 <option value="All">All</option>
               </SelectField>
@@ -805,7 +805,6 @@ function AdminAgentsPage() {
 
   // Layout state
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
 
   // Agent state (starts from mock data, supports create/update/toggle in-memory)
   const queryClient = useQueryClient();
@@ -970,6 +969,7 @@ function AdminAgentsPage() {
           email: data.email.trim(),
           phone: data.phone.trim(),
           address: data.address.trim(),
+          ...(data.code.trim() ? { agentCode: data.code.trim() } : {}),
         });
         if (data.status !== editAgent.status) {
           await agentsApi.setStatus(editAgent.id, data.status === "Active" ? "ACTIVE" : "INACTIVE");
@@ -985,6 +985,7 @@ function AdminAgentsPage() {
         a.id === editAgent?.id
           ? {
               ...a,
+              code: data.code.trim() ? data.code.trim().toUpperCase() : a.code,
               name: data.name,
               email: data.email,
               phone: data.phone,
@@ -1049,14 +1050,10 @@ function AdminAgentsPage() {
         currentPath="/admin/agents"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onOpenExport={() => setExportOpen(true)}
       />
 
       <div className="app-shell-pad flex flex-col min-h-screen">
-        <AdminHeader
-          onToggleSidebar={() => setSidebarOpen(true)}
-          onOpenExport={() => setExportOpen(true)}
-        />
+        <AdminHeader onToggleSidebar={() => setSidebarOpen(true)} />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
           {/* ── Page Header ──────────────────────────────────────────────── */}
@@ -1095,18 +1092,6 @@ function AdminAgentsPage() {
                   </button>
                 )}
               </div>
-
-              {/* Export button */}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setExportOpen(true)}
-                className="h-9 rounded-xl text-xs font-semibold gap-1.5 hidden sm:flex"
-              >
-                <Download className="size-3.5 text-primary" />
-                Export
-              </Button>
 
               {/* Add Agent */}
               <Button
@@ -1441,9 +1426,6 @@ function AdminAgentsPage() {
         </main>
         <AdminFooter />
       </div>
-
-      {/* ── Export Modal ─────────────────────────────────────────────────────── */}
-      <AdminExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
 
       {/* ── Add Agent Modal ──────────────────────────────────────────────────── */}
       {addOpen && (

@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { AdminExportModal } from "@/components/admin/AdminExportModal";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
@@ -620,7 +619,6 @@ function CustomerDetailsDialog({
 
 function AdminCustomersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
   const queryClient = useQueryClient();
   const live = useAdminCustomers();
   const liveAgents = useAdminAgents();
@@ -769,13 +767,9 @@ function AdminCustomersPage() {
         currentPath="/admin/customers"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onOpenExport={() => setExportOpen(true)}
       />
       <div className="flex min-h-screen flex-col app-shell-pad">
-        <AdminHeader
-          onToggleSidebar={() => setSidebarOpen(true)}
-          onOpenExport={() => setExportOpen(true)}
-        />
+        <AdminHeader onToggleSidebar={() => setSidebarOpen(true)} />
         <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -821,16 +815,6 @@ function AdminCustomersPage() {
                   </button>
                 )}
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setExportOpen(true)}
-                className="h-9 rounded-xl text-xs"
-              >
-                <FileText className="size-3.5 text-primary" />
-                <span className="hidden sm:inline">Export</span>
-              </Button>
             </div>
           </div>
 
@@ -1157,7 +1141,6 @@ function AdminCustomersPage() {
         <AdminFooter />
       </div>
 
-      <AdminExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
       {editCustomer && (
         <CustomerFormModal
           key={editCustomer.id}

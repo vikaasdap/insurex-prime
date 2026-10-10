@@ -525,9 +525,5 @@ export const agentFilterOptions = Array.from(
   ).values(),
 ).sort((a, b) => a.name.localeCompare(b.name));
 
-// ─── Find customer by id ──────────────────────────────────────────────────────
-export const findCustomerById = (id: string): Customer | undefined =>
-  customersFullList.find((c) => c.id === id);
-
 // ─── Re-export formatINR ──────────────────────────────────────────────────────
 export { formatINR };

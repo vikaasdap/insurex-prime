@@ -40,7 +40,6 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
-import { AdminExportModal } from "@/components/admin/AdminExportModal";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import {
@@ -1071,61 +1070,9 @@ function PolicyRowActions({
   );
 }
 
-// ─── Export menu ──────────────────────────────────────────────────────────────
-type ExportFormat = "CSV" | "Excel" | "PDF";
-
-function PolicyExportMenu({
-  scopes,
-  onExport,
-}: {
-  scopes: { label: string; count: number }[];
-  onExport: (scope: string, count: number, format: ExportFormat) => void;
-}) {
-  const formats: { format: ExportFormat; icon: typeof FileText }[] = [
-    { format: "CSV", icon: Table },
-    { format: "Excel", icon: FileSpreadsheet },
-    { format: "PDF", icon: FileText },
-  ];
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="h-9 rounded-xl text-xs">
-          <Download className="size-3.5 text-primary" />
-          <span className="hidden sm:inline">Export</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs">Export policies</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {scopes.map((scope) => (
-          <DropdownMenuSub key={scope.label}>
-            <DropdownMenuSubTrigger className="text-xs">
-              {scope.label}
-              <span className="ml-auto pl-2 text-[11px] text-muted-foreground">{scope.count}</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              {formats.map(({ format, icon: Icon }) => (
-                <DropdownMenuItem
-                  key={format}
-                  className="text-xs"
-                  disabled={scope.count === 0}
-                  onSelect={() => onExport(scope.label, scope.count, format)}
-                >
-                  <Icon /> {format}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 function AdminPoliciesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | PolicyInsuranceType>("All");
   const [statusFilter, setStatusFilter] = useState<"All" | PolicyProductStatus>("All");
@@ -1235,12 +1182,6 @@ function AdminPoliciesPage() {
     setEditPolicy(policy);
   };
 
-  const handleExport = (scope: string, count: number, format: ExportFormat) => {
-    toast.success(`${scope} (${count}) prepared as ${format}.`, {
-      description: "Demo export — file downloads will be enabled once the backend is connected.",
-    });
-  };
-
   const rowActions = (policy: PolicyProduct) => ({
     onView: () => setViewPolicyId(policy.id),
     onEdit: () => setEditPolicy(policy),
@@ -1265,13 +1206,9 @@ function AdminPoliciesPage() {
         currentPath="/admin/policies"
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onOpenExport={() => setExportOpen(true)}
       />
       <div className="flex min-h-screen flex-col app-shell-pad">
-        <AdminHeader
-          onToggleSidebar={() => setSidebarOpen(true)}
-          onOpenExport={() => setExportOpen(true)}
-        />
+        <AdminHeader onToggleSidebar={() => setSidebarOpen(true)} />
         <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -1319,17 +1256,6 @@ function AdminPoliciesPage() {
                   </button>
                 )}
               </div>
-              <PolicyExportMenu
-                scopes={[
-                  { label: "All Policies", count: catalog.kpis.total },
-                  {
-                    label: "Active Policies",
-                    count: catalog.kpis.active,
-                  },
-                  { label: "Filtered Policies", count: filteredTotal },
-                ]}
-                onExport={handleExport}
-              />
               <Button
                 type="button"
                 size="sm"
@@ -1624,7 +1550,6 @@ function AdminPoliciesPage() {
         <AdminFooter />
       </div>
 
-      <AdminExportModal isOpen={exportOpen} onClose={() => setExportOpen(false)} />
       {addOpen && (
         <PolicyFormModal
           key="new-policy"

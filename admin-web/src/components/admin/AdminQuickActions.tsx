@@ -15,14 +15,12 @@ export interface AdminQuickActionsProps {
   onOpenAddAgent?: () => void;
   onOpenAddPolicy?: () => void;
   onOpenGenerateReport?: () => void;
-  onOpenExport?: () => void;
 }
 
 export function AdminQuickActions({
   onOpenAddAgent,
   onOpenAddPolicy,
   onOpenGenerateReport,
-  onOpenExport,
 }: AdminQuickActionsProps) {
   const navigate = useNavigate();
 
@@ -63,22 +61,12 @@ export function AdminQuickActions({
       bg: "bg-amber-500/10 hover:bg-amber-500/20",
       onClick: onOpenGenerateReport,
     },
-    {
-      id: "export-data",
-      label: "Export Data",
-      description: "Download CSV, Excel, or PDF",
-      icon: Download,
-      color: "text-primary",
-      bg: "bg-primary/10 hover:bg-primary/20",
-      onClick: onOpenExport,
-    },
   ];
 
-  const stripIds = ["add-policy", "add-agent", "export-data"];
+  const stripIds = ["add-policy", "add-agent"];
   const stripLabel: Record<string, string> = {
     "add-policy": "+ Policy",
     "add-agent": "+ Agent",
-    "export-data": "Export",
   };
 
   return (
