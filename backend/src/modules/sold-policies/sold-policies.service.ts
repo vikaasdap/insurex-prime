@@ -376,8 +376,15 @@ export async function createSoldPolicy(
   const year = issueDate.getUTCFullYear();
   const receiptYear = new Date().getUTCFullYear();
 
+  if (body.policyNumber) {
+    const taken = await db.soldPolicy.findUnique({
+      where: { policyNumber: body.policyNumber },
+      select: { id: true },
+    });
+    if (taken) throw conflict("That policy number is already in use.");
+  }
   const sold = await withGeneratedCode(
-    () => randomCode(`POL-${year}`, 8),
+    () => body.policyNumber ?? randomCode(`POL-${year}`, 8),
     (policyNumber) =>
       db.$transaction(async (tx) => {
         const created = await tx.soldPolicy.create({
@@ -446,6 +453,25 @@ export async function updateSoldPolicy(
   if (!isAdmin(auth) && (body.policyStatus || body.paymentStatus)) {
     throw forbidden("Agents cannot change a sale's payment or policy status.");
   }
+  if (body.policyId && body.policyId !== existing.policyId) {
+    const [product, current] = await Promise.all([
+      db.policy.findUnique({ where: { id: body.policyId } }),
+      db.policy.findUniqueOrThrow({ where: { id: existing.policyId } }),
+    ]);
+    if (!product) throw notFound("Policy");
+    if (product.status !== "ACTIVE") throw conflict("INACTIVE policies cannot be sold.");
+    if (!isAdmin(auth) && product.insuranceType !== current.insuranceType) {
+      throw forbidden("Agents can only switch to a product of the same line of business.");
+    }
+  }
+
+  if (body.policyNumber && body.policyNumber !== existing.policyNumber) {
+    const taken = await db.soldPolicy.findUnique({
+      where: { policyNumber: body.policyNumber },
+      select: { id: true },
+    });
+    if (taken) throw conflict("That policy number is already in use.");
+  }
 
   const issueDate = body.issueDate ? parseDateOnly(body.issueDate) : existing.issueDate;
   const expiryDate = body.expiryDate ? parseDateOnly(body.expiryDate) : existing.expiryDate;
@@ -467,6 +493,8 @@ export async function updateSoldPolicy(
         ...(body.policyStatus ? { policyStatus: body.policyStatus } : {}),
         ...(body.paymentStatus ? { paymentStatus: body.paymentStatus } : {}),
         ...(body.premium !== undefined ? { premium: body.premium } : {}),
+        ...(body.policyNumber ? { policyNumber: body.policyNumber } : {}),
+        ...(body.policyId ? { policyId: body.policyId } : {}),
         issueDate,
         ...(inceptionDate !== undefined ? { inceptionDate } : {}),
         ...(body.insurerPolicyNumber !== undefined
