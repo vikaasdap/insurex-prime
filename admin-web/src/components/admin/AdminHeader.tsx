@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { PushToggle } from "@/components/pwa/pwa";
 import { Bell, CheckCircle2, Menu, Shield } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -113,6 +114,9 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
               Automated insurance event audit stream
             </span>
           </div>
+          <div className="flex justify-center border-t border-border p-2.5">
+            <PushToggle />
+          </div>
         </PopoverContent>
       </Popover>
       <Link
@@ -221,6 +225,9 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
                 <span className="text-[11px] text-muted-foreground">
                   Automated insurance event audit stream
                 </span>
+              </div>
+              <div className="flex justify-center border-t border-border p-2.5">
+                <PushToggle />
               </div>
             </PopoverContent>
           </Popover>
