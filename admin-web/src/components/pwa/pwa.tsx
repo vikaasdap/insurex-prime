@@ -1,6 +1,7 @@
-import { Bell, BellOff, Download, Share, WifiOff, X } from "lucide-react";
+import { Bell, Download, Share, WifiOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { isApiConfigured, pushApi } from "@/lib/api";
 
 /** Registers the service worker (production only, so dev servers are never served stale files). */
@@ -151,42 +152,55 @@ const urlBase64ToBytes = (value: string) => {
   return Uint8Array.from(raw, (char) => char.charCodeAt(0));
 };
 
-type PushState = "unsupported" | "off" | "on" | "blocked" | "needs-install";
+type PushState = "checking" | "off" | "on" | "blocked" | "unavailable";
+
+const UNAVAILABLE_NOTE: Record<string, string> = {
+  dev: "Phone alerts work in the deployed app, not on this local copy.",
+  server: "Phone alerts aren't set up on the server yet.",
+  ios: "On iPhone, add InsuroX to your Home Screen and open it from there to turn this on.",
+  browser: "This browser can't show phone alerts.",
+  signin: "Sign in again to manage phone alerts.",
+};
 
 /**
- * Turns phone alerts (meeting invitations and 2-hour / 15-minute reminders) on or off for this
- * device. Hidden when the server has no push keys. iPhone only allows alerts from the installed app.
+ * On/off switch for phone alerts (meeting invitations and 2-hour / 15-minute reminders) on this
+ * device. Always visible so people can see the setting; disabled with a reason when alerts can't
+ * work here. iPhone only allows alerts from the installed app.
  */
 export function PushToggle() {
-  const [state, setState] = useState<PushState | null>(null);
+  const [state, setState] = useState<PushState>("checking");
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isApiConfigured || !import.meta.env.PROD) return;
+    const unavailable = (why: string) => {
+      setReason(why);
+      setState("unavailable");
+    };
+    if (!isApiConfigured) return unavailable("server");
+    if (!import.meta.env.PROD) return unavailable("dev");
     let cancelled = false;
     (async () => {
       try {
         const { enabled } = await pushApi.key();
-        if (!enabled) return;
+        if (cancelled) return;
+        if (!enabled) return unavailable("server");
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-          if (!cancelled) setState(isIos() && !isStandalone() ? "needs-install" : "unsupported");
-          return;
+          return unavailable(isIos() && !isStandalone() ? "ios" : "browser");
         }
-        if (Notification.permission === "denied") return void (!cancelled && setState("blocked"));
+        if (Notification.permission === "denied") return setState("blocked");
         const registration = await navigator.serviceWorker.ready;
         const existing = await registration.pushManager.getSubscription();
         if (!cancelled) setState(existing && Notification.permission === "granted" ? "on" : "off");
       } catch {
-        // Alerts are optional: leave the button hidden.
+        if (!cancelled) unavailable("signin");
       }
     })();
     return () => {
       cancelled = true;
     };
   }, []);
-
-  if (state === null || state === "unsupported") return null;
 
   const turnOn = async () => {
     setBusy(true);
@@ -232,38 +246,28 @@ export function PushToggle() {
     }
   };
 
-  if (state === "needs-install") {
-    return (
-      <p className="text-xs text-muted-foreground">
-        For phone alerts on iPhone, add InsuroX to your Home Screen and open it from there.
-      </p>
-    );
-  }
-  if (state === "blocked") {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Alerts are blocked. Allow notifications for InsuroX in your phone's settings.
-      </p>
-    );
-  }
+  const on = state === "on";
+  const note =
+    state === "blocked"
+      ? "Alerts are blocked. Allow notifications for InsuroX in your phone's or browser's settings."
+      : state === "unavailable"
+        ? UNAVAILABLE_NOTE[reason]
+        : error;
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <Button
-        size="sm"
-        variant="outline"
-        className="rounded-xl"
-        disabled={busy}
-        onClick={() => void (state === "on" ? turnOff() : turnOn())}
-      >
-        {state === "on" ? (
-          <BellOff className="mr-1.5 size-4" />
-        ) : (
-          <Bell className="mr-1.5 size-4" />
-        )}
-        {state === "on" ? "Turn off phone alerts" : "Turn on phone alerts"}
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <Bell className="size-4 text-muted-foreground" />
+        <span className="text-sm font-semibold">Phone alerts</span>
+        <Switch
+          checked={on}
+          disabled={busy || state === "checking" || state === "unavailable" || state === "blocked"}
+          onCheckedChange={(next) => void (next ? turnOn() : turnOff())}
+          aria-label="Phone alerts"
+        />
+        <span className="text-xs font-medium text-muted-foreground">{on ? "On" : "Off"}</span>
+      </div>
+      {note && <p className="max-w-xs text-xs text-muted-foreground">{note}</p>}
     </div>
   );
 }
