@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, CalendarClock, LogOut, Menu, Search, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
+import { Bell, CalendarClock, LogOut, Menu } from "lucide-react";
 import { DismissButton, NotificationsHeader } from "@/components/NotificationsHeader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileTopBar, mobileIconButton } from "@/components/mobile/MobileTopBar";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   UpcomingMeetingsList,
@@ -116,16 +114,7 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
 
 export function AgentHeader({ title, subtitle, onToggleSidebar }: AgentHeaderProps) {
   const { agent, user, signOut } = useAgentSession();
-  const navigate = useNavigate();
-  const [query, setQuery] = useState("");
   useAutoPushAlerts();
-
-  const submitSearch = (event: FormEvent) => {
-    event.preventDefault();
-    const search = query.trim();
-    if (!search) return;
-    void navigate({ to: "/agent/customers", search: { search } });
-  };
 
   return (
     <>
@@ -158,32 +147,6 @@ export function AgentHeader({ title, subtitle, onToggleSidebar }: AgentHeaderPro
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <form
-            onSubmit={submitSearch}
-            role="search"
-            className="relative hidden w-48 md:block lg:w-64"
-          >
-            <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search my customers…"
-              aria-label="Search my customers"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="h-9 w-full rounded-xl bg-surface/60 pl-9 pr-8 text-xs focus-visible:ring-1 focus-visible:ring-primary"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute right-2.5 top-2.5 cursor-pointer text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </form>
-
           <ThemeToggle />
           <AgentNotifications />
 
