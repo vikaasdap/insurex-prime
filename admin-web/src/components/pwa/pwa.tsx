@@ -152,6 +152,105 @@ const urlBase64ToBytes = (value: string) => {
   return Uint8Array.from(raw, (char) => char.charCodeAt(0));
 };
 
+const OPT_OUT_KEY = "insurox.push-optout";
+const ASKED_KEY = "insurox.push-asked";
+
+const readFlag = (key: string) => {
+  try {
+    return window.localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+};
+const writeFlag = (key: string, on: boolean) => {
+  try {
+    if (on) window.localStorage.setItem(key, "1");
+    else window.localStorage.removeItem(key);
+  } catch {
+    // Private mode: the choice just isn't remembered.
+  }
+};
+
+const pushSupported = () =>
+  import.meta.env.PROD &&
+  isApiConfigured &&
+  "serviceWorker" in navigator &&
+  "PushManager" in window &&
+  "Notification" in window;
+
+/** Registers this device for the signed-in user (a device always follows whoever is signed in). */
+async function subscribeDevice() {
+  const { enabled, publicKey } = await pushApi.key();
+  if (!enabled || !publicKey) return false;
+  const registration = await navigator.serviceWorker.ready;
+  const subscription =
+    (await registration.pushManager.getSubscription()) ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToBytes(publicKey),
+    }));
+  await pushApi.subscribe(subscription.toJSON());
+  return true;
+}
+
+/** Asks for permission (must run from a tap/click) and registers the device. Returns the new state. */
+async function enablePush(): Promise<"on" | "off" | "blocked"> {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
+  writeFlag(OPT_OUT_KEY, false);
+  return (await subscribeDevice()) ? "on" : "off";
+}
+
+async function disablePush() {
+  writeFlag(OPT_OUT_KEY, true);
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  if (subscription) {
+    await pushApi.unsubscribe(subscription.endpoint);
+    await subscription.unsubscribe();
+  }
+}
+
+/**
+ * Phone alerts are on by default: once someone is signed in, alerts are registered on this device
+ * without any setup. Browsers only allow the permission prompt after a tap, so the first tap in
+ * the app triggers it (once). Someone who switches alerts off, or says no, is never asked again.
+ */
+export function useAutoPushAlerts() {
+  useEffect(() => {
+    if (!pushSupported() || readFlag(OPT_OUT_KEY)) return;
+    let cancelled = false;
+    let detach = () => {};
+    (async () => {
+      try {
+        if (Notification.permission === "granted") {
+          await subscribeDevice();
+        } else if (Notification.permission === "default" && !readFlag(ASKED_KEY)) {
+          const { enabled } = await pushApi.key();
+          if (!enabled || cancelled) return;
+          const ask = () => {
+            detach();
+            writeFlag(ASKED_KEY, true);
+            void enablePush().catch(() => undefined);
+          };
+          window.addEventListener("pointerdown", ask, { once: true });
+          window.addEventListener("keydown", ask, { once: true });
+          detach = () => {
+            window.removeEventListener("pointerdown", ask);
+            window.removeEventListener("keydown", ask);
+          };
+        }
+      } catch {
+        // Alerts are optional: never get in the way of the app.
+      }
+    })();
+    return () => {
+      cancelled = true;
+      detach();
+    };
+  }, []);
+}
+
 type PushState = "checking" | "off" | "on" | "blocked" | "unavailable";
 
 const UNAVAILABLE_NOTE: Record<string, string> = {
@@ -206,21 +305,7 @@ export function PushToggle() {
     setBusy(true);
     setError("");
     try {
-      if ((await Notification.requestPermission()) !== "granted") {
-        setState(Notification.permission === "denied" ? "blocked" : "off");
-        return;
-      }
-      const { publicKey } = await pushApi.key();
-      if (!publicKey) return;
-      const registration = await navigator.serviceWorker.ready;
-      const subscription =
-        (await registration.pushManager.getSubscription()) ??
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToBytes(publicKey),
-        }));
-      await pushApi.subscribe(subscription.toJSON());
-      setState("on");
+      setState(await enablePush());
     } catch {
       setError("Couldn't turn on alerts. Try again.");
     } finally {
@@ -232,12 +317,7 @@ export function PushToggle() {
     setBusy(true);
     setError("");
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        await pushApi.unsubscribe(subscription.endpoint);
-        await subscription.unsubscribe();
-      }
+      await disablePush();
       setState("off");
     } catch {
       setError("Couldn't turn off alerts. Try again.");
