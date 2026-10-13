@@ -254,7 +254,6 @@ export function useAutoPushAlerts() {
 type PushState = "checking" | "off" | "on" | "blocked" | "unavailable";
 
 const UNAVAILABLE_NOTE: Record<string, string> = {
-  dev: "Phone alerts work in the deployed app, not on this local copy.",
   server: "Phone alerts aren't set up on the server yet.",
   ios: "On iPhone, add InsuroX to your Home Screen and open it from there to turn this on.",
   browser: "This browser can't show phone alerts.",

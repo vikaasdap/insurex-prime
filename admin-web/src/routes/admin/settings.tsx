@@ -315,10 +315,6 @@ function AlertsSection() {
     >
       <div className="flex flex-col gap-2 px-5 py-5 sm:px-6">
         <PushToggle />
-        <p className="text-xs text-muted-foreground">
-          This only affects the device you are using now. Turn it on from each phone you want alerts
-          on.
-        </p>
       </div>
     </SettingsSection>
   );
