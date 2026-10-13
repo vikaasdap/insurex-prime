@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, Video } from "lucide-react";
 import { useMemo } from "react";
-import { isApiConfigured } from "@/lib/api";
+import { DismissButton } from "@/components/NotificationsHeader";
+import { useNotificationState, type NotificationState } from "@/components/notification-state";
+import { isApiConfigured, type ApiMeeting } from "@/lib/api";
 import { addDays, formatDay, formatTime, isSameDay, startOfDay } from "./calendar-utils";
 import { useMeetings, type CalendarScope } from "./use-calendar-data";
 
@@ -16,7 +18,20 @@ export function useUpcomingMeetings(scope: CalendarScope) {
   const query = useMeetings(scope, from, to);
   const now = Date.now();
   const upcoming = (query.data ?? []).filter((meeting) => new Date(meeting.endsAt).getTime() > now);
-  return { ...query, upcoming: upcoming.slice(0, SHOWN), total: upcoming.length };
+  return { ...query, all: upcoming };
+}
+
+export const meetingNoteId = (meeting: ApiMeeting) => `meeting:${meeting.id}:${meeting.startsAt}`;
+
+/** Upcoming meetings minus the ones cleared from the bell, with how many are still unread. */
+export function useMeetingNotifications(scope: CalendarScope) {
+  const state = useNotificationState(scope);
+  const query = useUpcomingMeetings(scope);
+  const visible = query.all
+    .filter((meeting) => !state.isDismissed(meetingNoteId(meeting)))
+    .slice(0, SHOWN);
+  const unread = visible.filter((meeting) => !state.isRead(meetingNoteId(meeting))).length;
+  return { state, visible, unread, ids: visible.map(meetingNoteId) };
 }
 
 const dayLabel = (date: Date) => {
@@ -30,9 +45,11 @@ const dayLabel = (date: Date) => {
 export function UpcomingMeetingsList({
   scope,
   meetings,
+  state,
 }: {
   scope: CalendarScope;
-  meetings: ReturnType<typeof useUpcomingMeetings>["upcoming"];
+  meetings: ApiMeeting[];
+  state: NotificationState;
 }) {
   if (!isApiConfigured) return null;
   return (
@@ -43,15 +60,20 @@ export function UpcomingMeetingsList({
           meeting.canEdit && meeting.attendees.length > 0
             ? `${meeting.attendees.length} invited`
             : `with ${meeting.organizer.name}`;
+        const noteId = meetingNoteId(meeting);
+        const read = () => state.markRead([noteId]);
         return (
           <div
             key={meeting.id}
-            className="flex gap-3 p-3 text-xs transition-colors hover:bg-muted/40"
+            className={`flex gap-3 p-3 text-xs transition-colors hover:bg-muted/40 ${
+              state.isRead(noteId) ? "" : "bg-primary/5"
+            }`}
           >
             <Video className="mt-0.5 size-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
               <Link
                 to={scope === "agent" ? "/agent/calendar" : "/admin/calendar"}
+                onClick={read}
                 className="block truncate font-semibold text-foreground"
               >
                 {meeting.title}
@@ -64,12 +86,14 @@ export function UpcomingMeetingsList({
                   href={meeting.meetingUrl}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={read}
                   className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary"
                 >
                   Join <ExternalLink className="size-3" />
                 </a>
               )}
             </div>
+            <DismissButton onClick={() => state.dismiss([noteId])} />
           </div>
         );
       })}

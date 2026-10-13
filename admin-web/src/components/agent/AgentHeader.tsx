@@ -2,11 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, CalendarClock, LogOut, Menu, Search, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { DismissButton, NotificationsHeader } from "@/components/NotificationsHeader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileTopBar, mobileIconButton } from "@/components/mobile/MobileTopBar";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { UpcomingMeetingsList, useUpcomingMeetings } from "@/components/calendar/UpcomingMeetings";
+import {
+  UpcomingMeetingsList,
+  useMeetingNotifications,
+} from "@/components/calendar/UpcomingMeetings";
 import { useAutoPushAlerts } from "@/components/pwa/pwa";
 import { agentApi, retryUnlessClientError } from "@/lib/api";
 import { agentKeys } from "@/lib/agent-queries";
@@ -28,8 +32,13 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
     staleTime: 60_000,
   });
   const expiring = data?.expiringPolicies ?? [];
-  const meetings = useUpcomingMeetings("agent");
-  const count = expiring.length + meetings.total;
+  const meetings = useMeetingNotifications("agent");
+  const { state } = meetings;
+  const policies = expiring.filter((policy) => !state.isDismissed(`policy:${policy.id}`));
+  const policyIds = policies.map((policy) => `policy:${policy.id}`);
+  const allIds = [...meetings.ids, ...policyIds];
+  const count = meetings.unread + policyIds.filter((id) => !state.isRead(id)).length;
+  const total = meetings.visible.length + policies.length;
 
   return (
     <Popover>
@@ -56,42 +65,54 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
         collisionPadding={16}
         className="w-[calc(100vw-2rem)] sm:w-80 rounded-2xl border-border p-0 shadow-nav"
       >
-        <div className="border-b border-border p-3.5">
-          <span className="text-xs font-bold">Notifications</span>
-        </div>
+        <NotificationsHeader
+          unread={count}
+          hasItems={total > 0}
+          onMarkAllRead={() => state.markRead(allIds)}
+          onClearAll={() => state.dismiss(allIds)}
+        />
         <div className="max-h-80 divide-y divide-border/60 overflow-y-auto">
           {isLoading && <p className="p-4 text-xs text-muted-foreground">Loading…</p>}
           {isError && (
             <p className="p-4 text-xs text-muted-foreground">Notifications are unavailable.</p>
           )}
-          {!isLoading && !isError && count === 0 && (
+          {!isLoading && !isError && total === 0 && (
             <p className="p-4 text-xs text-muted-foreground">
               You're all caught up. No meetings or expiring policies.
             </p>
           )}
-          <UpcomingMeetingsList scope="agent" meetings={meetings.upcoming} />
-          {expiring.map((policy) => (
-            <Link
-              key={policy.id}
-              to="/agent/sold-policies"
-              search={{ view: policy.id }}
-              className="flex gap-3 p-3 text-xs transition-colors hover:bg-muted/40"
-            >
-              <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" />
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-foreground">
-                  {policy.customer.fullName} · {policy.policy.policyName}
-                </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Expires {formatDate(policy.expiryDate)} (
-                  {policy.daysRemaining === 0
-                    ? "today"
-                    : `in ${policy.daysRemaining} day${policy.daysRemaining === 1 ? "" : "s"}`}
-                  )
-                </p>
+          <UpcomingMeetingsList scope="agent" meetings={meetings.visible} state={state} />
+          {policies.map((policy) => {
+            const noteId = `policy:${policy.id}`;
+            return (
+              <div
+                key={policy.id}
+                className={`flex gap-3 p-3 text-xs transition-colors hover:bg-muted/40 ${
+                  state.isRead(noteId) ? "" : "bg-primary/5"
+                }`}
+              >
+                <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Link
+                  to="/agent/sold-policies"
+                  search={{ view: policy.id }}
+                  onClick={() => state.markRead([noteId])}
+                  className="min-w-0 flex-1"
+                >
+                  <p className="truncate font-semibold text-foreground">
+                    {policy.customer.fullName} · {policy.policy.policyName}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    Expires {formatDate(policy.expiryDate)} (
+                    {policy.daysRemaining === 0
+                      ? "today"
+                      : `in ${policy.daysRemaining} day${policy.daysRemaining === 1 ? "" : "s"}`}
+                    )
+                  </p>
+                </Link>
+                <DismissButton onClick={() => state.dismiss([noteId])} />
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </PopoverContent>
     </Popover>
