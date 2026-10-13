@@ -17,7 +17,7 @@ export interface SoldPolicyListParams extends ListParams {
   customerId?: string | undefined;
   policyId?: string | undefined;
   /** In force / expiring within 30 days / past expiry. */
-  expiry?: "ACTIVE" | "EXPIRING" | "EXPIRED" | undefined;
+  expiry?: "ACTIVE" | "EXPIRING" | "EXPIRED" | "COMPLETED" | undefined;
 }
 
 export interface SalePolicyInput {
@@ -38,6 +38,8 @@ export interface SalePolicyInput {
   premium?: number | undefined;
   /** Required when the policy has no catalog term; admins may override it otherwise. */
   expiryDate?: string | undefined;
+  /** LIFE only: years premiums are payable; a renewal inherits it. */
+  premiumPayingTerm?: number | undefined;
   /** Generated when left out. */
   policyNumber?: string | undefined;
   /** The number issued on the insurer's own portal. */
@@ -66,6 +68,7 @@ export const soldPoliciesApi = {
       expiryDate: string;
       premium: number;
       policyNumber: string;
+      premiumPayingTerm: number | null;
       policyId: string;
       insurerPolicyNumber: string;
     }>,

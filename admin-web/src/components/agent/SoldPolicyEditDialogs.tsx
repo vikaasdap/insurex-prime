@@ -72,9 +72,11 @@ function EditForm({ sale, onClose }: { sale: ApiSoldPolicy; onClose: () => void 
     expiryDate: sale.expiryDate,
     premium: String(sale.premium),
     policyNumber: sale.policyNumber,
+    premiumPayingTerm: sale.premiumPayingTerm ? String(sale.premiumPayingTerm) : "",
     insurerPolicyNumber: sale.insurerPolicyNumber ?? "",
   });
   const [policyId, setPolicyId] = useState(sale.policy.id);
+  const isLife = sale.policy.insuranceType === "LIFE";
   // Same line of business only (e.g. Two Wheeler <-> Four Wheeler within Motor).
   const products = useQuery({
     queryKey: agentKeys.policies({ edit: sale.policy.insuranceType }),
@@ -107,6 +109,9 @@ function EditForm({ sale, onClose }: { sale: ApiSoldPolicy; onClose: () => void 
         expiryDate: form.expiryDate,
         premium: Number(form.premium),
         policyNumber: form.policyNumber.trim(),
+        ...(isLife
+          ? { premiumPayingTerm: form.premiumPayingTerm ? Number(form.premiumPayingTerm) : null }
+          : {}),
         ...(policyId !== sale.policy.id ? { policyId } : {}),
         insurerPolicyNumber: form.insurerPolicyNumber.trim(),
       }),
@@ -203,6 +208,28 @@ function EditForm({ sale, onClose }: { sale: ApiSoldPolicy; onClose: () => void 
             <p className="mt-1 text-xs font-medium text-destructive">{errors.policyNumber}</p>
           )}
         </div>
+        {isLife && (
+          <div className="sm:col-span-2">
+            <Label
+              htmlFor="edit-premiumPayingTerm"
+              className="text-xs font-bold uppercase tracking-wider"
+            >
+              Premium paying term (years)
+            </Label>
+            <Input
+              id="edit-premiumPayingTerm"
+              inputMode="numeric"
+              maxLength={3}
+              value={form.premiumPayingTerm}
+              onChange={(event) => set("premiumPayingTerm", event.target.value.replace(/\D/g, ""))}
+              className="mt-1 h-10 rounded-xl"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              After the last premium year the policy is marked Completed and is not offered for
+              renewal.
+            </p>
+          </div>
+        )}
         <div className="sm:col-span-2">
           <Label htmlFor="edit-insurer" className="text-xs font-bold uppercase tracking-wider">
             Insurer policy number
