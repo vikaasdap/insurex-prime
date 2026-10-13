@@ -73,8 +73,8 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
         </PopoverTrigger>
         <PopoverContent
           align="end"
-          collisionPadding={12}
-          className="w-[min(20rem,calc(100vw-1.5rem))] p-0 rounded-2xl shadow-nav border-border"
+          collisionPadding={16}
+          className="w-[calc(100vw-2rem)] sm:w-80 p-0 rounded-2xl shadow-nav border-border"
         >
           <div className="flex items-center justify-between border-b border-border p-3.5">
             <div className="flex items-center gap-2">
@@ -183,8 +183,8 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              collisionPadding={12}
-              className="w-[min(20rem,calc(100vw-1.5rem))] p-0 rounded-2xl shadow-nav border-border"
+              collisionPadding={16}
+              className="w-[calc(100vw-2rem)] sm:w-80 p-0 rounded-2xl shadow-nav border-border"
             >
               <div className="flex items-center justify-between border-b border-border p-3.5">
                 <div className="flex items-center gap-2">

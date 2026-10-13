@@ -53,8 +53,8 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        collisionPadding={12}
-        className="w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border-border p-0 shadow-nav"
+        collisionPadding={16}
+        className="w-[calc(100vw-2rem)] sm:w-80 rounded-2xl border-border p-0 shadow-nav"
       >
         <div className="border-b border-border p-3.5">
           <span className="text-xs font-bold">Notifications</span>
