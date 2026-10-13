@@ -979,7 +979,7 @@ function SaleForm({
                 type="date"
                 min={form.issueDate}
                 disabled={!termByAgent}
-                value={termByAgent ? form.expiryDate : ""}
+                value={expiryPreview}
                 onChange={(event) => set("expiryDate", event.target.value)}
                 aria-invalid={Boolean(errors.expiryDate)}
                 className={inputClass("expiryDate")}
