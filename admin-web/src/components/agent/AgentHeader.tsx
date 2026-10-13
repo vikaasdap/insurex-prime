@@ -130,9 +130,6 @@ export function AgentHeader({ title, subtitle, onToggleSidebar }: AgentHeaderPro
   return (
     <>
       <MobileTopBar eyebrow={user.tenant?.name ?? "InsuroX Prime"} title={title}>
-        <Link to="/agent/customers" aria-label="Search my customers" className={mobileIconButton}>
-          <Search className="size-[22px]" />
-        </Link>
         <AgentNotifications mobile />
         <Link
           to="/agent/profile"
