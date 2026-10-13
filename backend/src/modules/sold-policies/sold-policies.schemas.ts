@@ -131,6 +131,13 @@ export const createSoldPolicyBodySchema = z.object({
     .describe(
       "YYYY-MM-DD. Required when the policy has no catalog duration; otherwise only admins may override the computed date.",
     ),
+  policyNumber: z
+    .string()
+    .trim()
+    .min(1)
+    .max(60)
+    .optional()
+    .describe("Policy number to record. Generated (POL-YYYY-XXXXXXXX) when omitted"),
   insurerPolicyNumber: z
     .string()
     .trim()
@@ -176,6 +183,8 @@ export const updateSoldPolicyBodySchema = z
     issueDate: z.iso.date(),
     inceptionDate: z.iso.date().nullable(),
     expiryDate: z.iso.date(),
+    policyNumber: z.string().trim().min(1).max(60),
+    policyId: z.uuid().describe("move the sale to another ACTIVE catalog product (agents: same line of business only)"),
     insurerPolicyNumber: z.string().trim().max(60).nullable(),
     premium: z.number().positive().max(1e10),
   })

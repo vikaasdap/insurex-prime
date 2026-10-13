@@ -38,6 +38,8 @@ export interface SalePolicyInput {
   premium?: number | undefined;
   /** Required when the policy has no catalog term; admins may override it otherwise. */
   expiryDate?: string | undefined;
+  /** Generated when left out. */
+  policyNumber?: string | undefined;
   /** The number issued on the insurer's own portal. */
   insurerPolicyNumber?: string | undefined;
 }
@@ -63,6 +65,8 @@ export const soldPoliciesApi = {
       inceptionDate: string | null;
       expiryDate: string;
       premium: number;
+      policyNumber: string;
+      policyId: string;
       insurerPolicyNumber: string;
     }>,
   ) => apiRequest<ApiSoldPolicyDetail>(`/sold-policies/${id}`, { method: "PATCH", body: input }),
