@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileTopBar, mobileIconButton } from "@/components/mobile/MobileTopBar";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { UpcomingMeetingsList, useUpcomingMeetings } from "@/components/calendar/UpcomingMeetings";
 import { useAutoPushAlerts } from "@/components/pwa/pwa";
 import { agentApi, retryUnlessClientError } from "@/lib/api";
 import { agentKeys } from "@/lib/agent-queries";
@@ -27,7 +28,8 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
     staleTime: 60_000,
   });
   const expiring = data?.expiringPolicies ?? [];
-  const count = expiring.length;
+  const meetings = useUpcomingMeetings("agent");
+  const count = expiring.length + meetings.total;
 
   return (
     <Popover>
@@ -49,7 +51,11 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 rounded-2xl border-border p-0 shadow-nav">
+      <PopoverContent
+        align="end"
+        collisionPadding={12}
+        className="w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border-border p-0 shadow-nav"
+      >
         <div className="border-b border-border p-3.5">
           <span className="text-xs font-bold">Notifications</span>
         </div>
@@ -60,9 +66,10 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
           )}
           {!isLoading && !isError && count === 0 && (
             <p className="p-4 text-xs text-muted-foreground">
-              You're all caught up. No policies are expiring soon.
+              You're all caught up. No meetings or expiring policies.
             </p>
           )}
+          <UpcomingMeetingsList scope="agent" meetings={meetings.upcoming} />
           {expiring.map((policy) => (
             <Link
               key={policy.id}
