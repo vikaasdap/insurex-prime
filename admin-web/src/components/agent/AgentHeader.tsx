@@ -65,12 +65,7 @@ function AgentNotifications({ mobile = false }: { mobile?: boolean }) {
         collisionPadding={16}
         className="w-[calc(100vw-2rem)] sm:w-80 rounded-2xl border-border p-0 shadow-nav"
       >
-        <NotificationsHeader
-          unread={count}
-          hasItems={total > 0}
-          onMarkAllRead={() => state.markRead(allIds)}
-          onClearAll={() => state.dismiss(allIds)}
-        />
+        <NotificationsHeader unread={count} onMarkAllRead={() => state.markRead(allIds)} />
         <div className="max-h-80 divide-y divide-border/60 overflow-y-auto">
           {isLoading && <p className="p-4 text-xs text-muted-foreground">Loading…</p>}
           {isError && (

@@ -14,7 +14,7 @@ const MAX_MARKS = 300;
 const listeners = new Set<() => void>();
 const cache = new Map<string, { raw: string | null; marks: Marks }>();
 
-const storageKey = (scope: string) => `insurox.notifications.${scope}`;
+const storageKey = (scope: string) => `insurox.notifications.v2.${scope}`;
 
 function load(scope: string): Marks {
   let raw: string | null = null;

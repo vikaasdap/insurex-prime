@@ -56,16 +56,11 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const meetings = useMeetingNotifications("admin");
   const unreadCount = notifications.filter((n) => n.unread).length + meetings.unread;
-  const hasItems = notifications.length > 0 || meetings.visible.length > 0;
 
   const handleMarkAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
     meetings.state.markRead(meetings.ids);
     toast.success("All notifications marked as read");
-  };
-  const handleClearAll = () => {
-    setNotifications([]);
-    meetings.state.dismiss(meetings.ids);
   };
 
   const mobileBar = (
@@ -86,12 +81,7 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
           collisionPadding={16}
           className="w-[calc(100vw-2rem)] sm:w-80 p-0 rounded-2xl shadow-nav border-border"
         >
-          <NotificationsHeader
-            unread={unreadCount}
-            hasItems={hasItems}
-            onMarkAllRead={handleMarkAllRead}
-            onClearAll={handleClearAll}
-          />
+          <NotificationsHeader unread={unreadCount} onMarkAllRead={handleMarkAllRead} />
           <div className="divide-y divide-border/60 max-h-72 overflow-y-auto">
             {notifications.length === 0 && meetings.visible.length === 0 && (
               <p className="p-4 text-center text-xs text-muted-foreground">No notifications yet</p>
@@ -187,12 +177,7 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
               collisionPadding={16}
               className="w-[calc(100vw-2rem)] sm:w-80 p-0 rounded-2xl shadow-nav border-border"
             >
-              <NotificationsHeader
-                unread={unreadCount}
-                hasItems={hasItems}
-                onMarkAllRead={handleMarkAllRead}
-                onClearAll={handleClearAll}
-              />
+              <NotificationsHeader unread={unreadCount} onMarkAllRead={handleMarkAllRead} />
               <div className="divide-y divide-border/60 max-h-72 overflow-y-auto">
                 {notifications.length === 0 && meetings.visible.length === 0 && (
                   <p className="p-4 text-center text-xs text-muted-foreground">
