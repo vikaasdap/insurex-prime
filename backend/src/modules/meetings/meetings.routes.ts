@@ -108,7 +108,10 @@ export const meetingRoutes: FastifyPluginAsyncZod = async (app) => {
     async (request) => {
       const auth = requireAuth(request);
       return ok(
-        await updateMeeting(request.db, requireTenantId(auth), auth, request.params.id, request.body),
+        await updateMeeting(request.db, requireTenantId(auth), auth, request.params.id, request.body, {
+          config: app.config,
+          logger: request.log,
+        }),
       );
     },
   );
@@ -124,6 +127,12 @@ export const meetingRoutes: FastifyPluginAsyncZod = async (app) => {
         response: { 200: successSchema(z.object({ id: z.uuid() })), ...errorResponses },
       },
     },
-    async (request) => ok(await deleteMeeting(request.db, requireAuth(request), request.params.id)),
+    async (request) =>
+      ok(
+        await deleteMeeting(request.db, requireAuth(request), request.params.id, {
+          config: app.config,
+          logger: request.log,
+        }),
+      ),
   );
 };

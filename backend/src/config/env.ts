@@ -93,6 +93,18 @@ const envSchema = z
       .trim()
       .min(1)
       .default("gemini-flash-latest,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite"),
+    // Google Calendar sync (OAuth web client from Google Cloud Console, Calendar API enabled).
+    // GOOGLE_REDIRECT_URI is the backend callback, e.g. https://api.example.com/api/v1/integrations/google/callback.
+    // GOOGLE_TOKEN_SECRET (32+ chars) encrypts stored refresh tokens and signs the OAuth state.
+    GOOGLE_CLIENT_ID: optionalString,
+    GOOGLE_CLIENT_SECRET: optionalString,
+    GOOGLE_REDIRECT_URI: optionalString,
+    GOOGLE_TOKEN_SECRET: optionalString.refine(
+      (value) => value === undefined || value.length >= 32,
+      "must be at least 32 characters",
+    ),
+    // Minutes between background pulls of changes made in Google Calendar. 0 turns the job off.
+    GOOGLE_SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(0).max(60).default(2),
   })
   .superRefine((env, ctx) => {
     if (Boolean(env.FIREBASE_CLIENT_EMAIL) !== Boolean(env.FIREBASE_PRIVATE_KEY)) {

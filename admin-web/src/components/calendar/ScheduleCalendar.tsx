@@ -21,6 +21,7 @@ import {
   type CalendarView,
   type EventTone,
 } from "./calendar-utils";
+import { GoogleCalendarSync } from "./GoogleCalendarSync";
 import { EventDetailDialog, MeetingFormDialog, type MeetingFormState } from "./MeetingDialogs";
 import { useMeetings, type CalendarScope } from "./use-calendar-data";
 
@@ -212,6 +213,7 @@ export function ScheduleCalendar({ scope, extraEvents = [] }: ScheduleCalendarPr
               </button>
             ))}
           </div>
+          <GoogleCalendarSync scope={scope} />
           <Button onClick={() => newMeeting()} className="rounded-xl">
             <Plus className="mr-1.5 size-4" /> New meeting
           </Button>

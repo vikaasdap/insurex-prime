@@ -220,15 +220,17 @@ model User {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tenant            Tenant?                   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   agent             Agent?
   auditLogs         AuditLog[]
   agentSessions     AgentSession[]
   updatedSettings   SystemSetting[]
-  organizedMeetings Meeting[]          @relation("MeetingOrganizer")
+  organizedMeetings Meeting[]                 @relation("MeetingOrganizer")
   meetingInvites    MeetingAttendee[]
   fieldNotes        FieldNote[]
   pushSubscriptions PushSubscription[]
+  googleCalendar    GoogleCalendarConnection?
+  googleEvents      MeetingGoogleEvent[]
 
   @@index([role])
   @@index([tenantId, role])
@@ -484,9 +486,10 @@ model Meeting {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  organizer User              @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
-  attendees MeetingAttendee[]
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  organizer    User                 @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  attendees    MeetingAttendee[]
+  googleEvents MeetingGoogleEvent[]
 
   @@index([tenantId, startsAt])
   @@index([organizerId, startsAt])
@@ -520,6 +523,40 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+/// A user's linked Google Calendar. The refresh token is stored AES-256-GCM encrypted.
+model GoogleCalendarConnection {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @unique @db.Uuid
+  googleEmail     String
+  refreshTokenEnc String
+  /// Google's incremental-sync cursor; null forces a full re-read.
+  syncToken       String?
+  lastSyncedAt    DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("google_calendar_connections")
+}
+
+/// Which Google Calendar event mirrors a meeting on a given user's calendar.
+model MeetingGoogleEvent {
+  meetingId     String @db.Uuid
+  userId        String @db.Uuid
+  googleEventId String
+  /// Etag of our last write, so the next pull can tell our own change from the user's.
+  etag          String @default("")
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([meetingId, userId])
+  @@unique([userId, googleEventId])
+  @@map("meeting_google_events")
 }
 
 model AgentSession {

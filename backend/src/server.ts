@@ -2,6 +2,7 @@ import { buildApp } from "./app.js";
 import { createDatabase } from "./config/database.js";
 import { EnvValidationError, loadEnv } from "./config/env.js";
 import { createFirebaseTokenVerifier } from "./config/firebase.js";
+import { startGoogleSyncJob } from "./modules/google-calendar/google-calendar.service.js";
 import { startMeetingAlertJob } from "./modules/meetings/meeting-push.js";
 import { startReminderJob } from "./modules/field-notes/field-note-emails.js";
 
@@ -42,6 +43,9 @@ async function main() {
     const stopMeetingAlerts = startMeetingAlertJob(db, env, app.log);
     app.addHook("onClose", async () => stopMeetingAlerts());
   }
+
+  const stopGoogleSync = startGoogleSyncJob(db, env, app.log);
+  app.addHook("onClose", async () => stopGoogleSync());
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });
