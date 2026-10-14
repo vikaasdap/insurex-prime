@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -483,6 +483,8 @@ function Index() {
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
             <a href={LOGIN_URL}>Login</a>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
           </nav>
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-2 pt-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
