@@ -42,6 +42,7 @@ export const policySchema = z
     id: z.uuid(),
     policyCode: z.string(),
     policyName: z.string(),
+    uin: z.string().describe("The insurer's Unique Identification Number; empty when not recorded"),
     insuranceType: z.enum(InsuranceType),
     description: z.string(),
     insurerId: z.uuid(),
@@ -101,6 +102,7 @@ export const policyCodeSchema = z
 const policyFields = {
   policyCode: policyCodeSchema,
   policyName: z.string().trim().min(2).max(120),
+  uin: z.string().trim().max(40).default(""),
   insuranceType: z.enum(InsuranceType),
   description: z.string().trim().max(2000).default(""),
   insurerId: z
@@ -130,9 +132,32 @@ export const createPolicyBodySchema = z.object(policyFields).refine(detailsMatch
   path: ["categoryDetails"],
 });
 
+/** One policy in a bulk add: the code is made from the name when left blank. */
+const bulkPolicySchema = z.object({
+  policyName: policyFields.policyName,
+  policyCode: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    policyCodeSchema.optional(),
+  ),
+  uin: policyFields.uin,
+});
+
+export const createPoliciesBulkBodySchema = z.object({
+  insuranceType: z.enum(InsuranceType),
+  insurerId: policyFields.insurerId,
+  categoryId: policyFields.categoryId,
+  policies: z.array(bulkPolicySchema).min(1).max(50),
+});
+
+export const policiesBulkCreatedSchema = z.object({
+  created: z.number().int(),
+  policies: z.array(policySchema),
+});
+
 export const updatePolicyBodySchema = z
   .object({
     ...policyFields,
+    uin: policyFields.uin.removeDefault(),
     description: policyFields.description.removeDefault(),
     premiumFrequency: policyFields.premiumFrequency.removeDefault(),
     eligibility: policyFields.eligibility.removeDefault(),

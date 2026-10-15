@@ -54,6 +54,7 @@ import {
 } from "@/lib/api";
 import { RENEWABLE_WITHIN_DAYS, expiryStatus } from "@/lib/expiry-status";
 import { adminKeys } from "@/lib/admin-queries";
+import { AddPoliciesDialog, type AddPoliciesTarget } from "@/components/catalog/AddPoliciesDialog";
 import { agentKeys } from "@/lib/agent-queries";
 import {
   daysUntil,
@@ -382,15 +383,22 @@ function RenewedPolicyFinder({
   );
 }
 
+/** The dropdown entry that opens the "add policies" popup (agency admins only). */
+const ADD_POLICY_OPTION = "__add_policy__";
+
 function PolicyStep({
   selection,
   onSelectionChange,
   onSelect,
+  canAddPolicies,
 }: {
   selection: CatalogSelection;
   onSelectionChange: (selection: CatalogSelection) => void;
   onSelect: (policy: ApiPolicy) => void;
+  /** Admins can add missing policies to the catalog from here; agents cannot. */
+  canAddPolicies: boolean;
 }) {
+  const [addTarget, setAddTarget] = useState<AddPoliciesTarget | null>(null);
   const tree = useQuery({
     queryKey: [...agentKeys.all, "catalog-tree"],
     queryFn: () => catalogApi.tree(),
@@ -434,7 +442,23 @@ function PolicyStep({
         ? subCategory.policies
         : (category?.policies ?? []);
 
+  const openAddPolicies = () => {
+    if (!insurer || !line) return;
+    const parent =
+      subCategory && category ? `${category.name} › ${subCategory.name}` : category?.name;
+    setAddTarget({
+      insurerId: insurer.insurer.id,
+      insuranceType: line.line,
+      categoryId: subCategory?.id ?? category?.id ?? null,
+      categoryName: parent ?? insuranceTypeLabel[line.line],
+    });
+  };
+
   const choose = async (policyId: string) => {
+    if (policyId === ADD_POLICY_OPTION) {
+      openAddPolicies();
+      return;
+    }
     if (!policyId) return;
     onSelectionChange({ ...selection, policyId });
     setLoadingId(policyId);
@@ -568,7 +592,7 @@ function PolicyStep({
                 value={
                   policies.some((item) => item.id === selection.policyId) ? selection.policyId : ""
                 }
-                disabled={loadingId !== null || policies.length === 0}
+                disabled={loadingId !== null || (policies.length === 0 && !canAddPolicies)}
                 onChange={(event) => void choose(event.target.value)}
                 className="h-10 w-full text-sm"
               >
@@ -580,11 +604,13 @@ function PolicyStep({
                     {item.policyName}
                   </option>
                 ))}
+                {canAddPolicies && <option value={ADD_POLICY_OPTION}>+ Add policy</option>}
               </NativeSelect>
             </Field>
           )}
         </div>
       )}
+      <AddPoliciesDialog target={addTarget} onClose={() => setAddTarget(null)} />
       {loadingId !== null && (
         <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" /> Opening policy…
@@ -1436,6 +1462,7 @@ export function RecordSoldPolicyFlow({
           selection={selection}
           onSelectionChange={setSelection}
           onSelect={selectPolicy}
+          canAddPolicies={adminMode}
         />
       ) : (
         <SaleForm

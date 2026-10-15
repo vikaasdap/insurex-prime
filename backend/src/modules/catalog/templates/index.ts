@@ -1,3 +1,4 @@
+import { licTemplate } from "./lic.js";
 import { tataAigTemplate } from "./tata-aig.js";
 import { tataAiaTemplate } from "./tata-aia.js";
 import type { CatalogTemplate } from "./types.js";
@@ -6,6 +7,7 @@ import type { CatalogTemplate } from "./types.js";
 const TEMPLATES: Record<string, CatalogTemplate> = {
   TATA_AIA: tataAiaTemplate,
   TATA_AIG: tataAigTemplate,
+  LIC: licTemplate,
 };
 
 export const getCatalogTemplate = (insurerCode: string): CatalogTemplate | undefined =>

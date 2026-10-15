@@ -36,6 +36,7 @@ import {
   type ApiInsurer,
   type ApiTenant,
   type ApiTenantInsurer,
+  type InsuranceType,
 } from "@/lib/api";
 import type { TenantActivated, TenantInsurerInput } from "@/lib/api/platform";
 import { readLogo } from "@/lib/read-logo";
@@ -244,12 +245,15 @@ function TenantsPage() {
                             Licence <span className="font-mono">{link.licenceCode}</span> ·{" "}
                             {link.policies} policies
                           </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Sells: {link.lines.map(lineLabel).join(", ")}
+                          </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Edit ${link.name} codes`}
-                          title="Edit codes"
+                          aria-label={`Edit ${link.name} codes and lines`}
+                          title="Edit codes and lines"
                           className="size-8 rounded-lg text-muted-foreground"
                           onClick={() => setEditingCodes({ tenant, link })}
                         >
@@ -359,12 +363,72 @@ function Field({
   );
 }
 
+/** The lines of business an agency can sell for an insurer. */
+const LINE_OPTIONS: { line: InsuranceType; label: string }[] = [
+  { line: "LIFE", label: "Life" },
+  { line: "HEALTH", label: "Health" },
+  { line: "MOTOR", label: "Motor" },
+  { line: "COMMERCIAL", label: "Commercial" },
+];
+
+const lineLabel = (line: InsuranceType) =>
+  LINE_OPTIONS.find((option) => option.line === line)?.label ?? line;
+
+/** Tick boxes for the lines of business; at least one is needed. */
+function LinePicker({
+  value,
+  onChange,
+  idPrefix,
+}: {
+  value: InsuranceType[];
+  onChange: (lines: InsuranceType[]) => void;
+  idPrefix: string;
+}) {
+  return (
+    <fieldset>
+      <legend className="text-xs font-bold uppercase tracking-wider">Lines of business sold</legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {LINE_OPTIONS.map(({ line, label }) => {
+          const checked = value.includes(line);
+          return (
+            <label
+              key={line}
+              htmlFor={`${idPrefix}-${line}`}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium ${
+                checked ? "border-primary bg-primary/10 text-foreground" : "border-border/70"
+              }`}
+            >
+              <input
+                id={`${idPrefix}-${line}`}
+                type="checkbox"
+                checked={checked}
+                onChange={(event) =>
+                  onChange(
+                    event.target.checked ? [...value, line] : value.filter((item) => item !== line),
+                  )
+                }
+              />
+              {label}
+            </label>
+          );
+        })}
+      </div>
+      {value.length === 0 && (
+        <p className="mt-1 text-[11px] text-muted-foreground">Tick at least one.</p>
+      )}
+    </fieldset>
+  );
+}
+
 interface InsurerRow {
   key: number;
   /** Free text: an existing insurer's name, or a new one that is created on save. */
   insurerName: string;
   businessCode: string;
   licenceCode: string;
+  lines: InsuranceType[];
+  /** Once the admin ticks a line themselves, picking another insurer no longer resets the ticks. */
+  linesTouched: boolean;
   load: boolean;
 }
 
@@ -373,6 +437,8 @@ const emptyRow = (key: number): InsurerRow => ({
   insurerName: "",
   businessCode: "",
   licenceCode: "",
+  lines: [],
+  linesTouched: false,
   load: true,
 });
 
@@ -386,7 +452,8 @@ const findInsurer = (row: InsurerRow, insurers: ApiInsurer[]) =>
 const rowValid = (row: InsurerRow) =>
   row.insurerName.trim().length >= 2 &&
   row.businessCode.trim().length >= 2 &&
-  row.licenceCode.trim().length >= 2;
+  row.licenceCode.trim().length >= 2 &&
+  row.lines.length > 0;
 
 /** "Tata AIA" → "TATA_AIA", the code the API requires for a new insurer. */
 const toInsurerCode = (name: string) =>
@@ -412,7 +479,13 @@ async function toInput(row: InsurerRow, known: ApiInsurer[]): Promise<TenantInsu
     insurerId: insurer.id,
     businessCode: row.businessCode.trim(),
     licenceCode: row.licenceCode.trim(),
-    catalog: { source: row.load && insurer.hasCatalogTemplate ? "TEMPLATE" : "NONE" },
+    lines: row.lines,
+    catalog: {
+      source:
+        row.load && insurer.templateLines.some((line) => row.lines.includes(line))
+          ? "TEMPLATE"
+          : "NONE",
+    },
   };
 }
 
@@ -432,7 +505,7 @@ function InsurerRowFields({
 }) {
   const insurer = findInsurer(row, insurers);
   const taken = takenNames.some((name) => sameName(name, row.insurerName));
-  const canTemplate = Boolean(insurer?.hasCatalogTemplate);
+  const canTemplate = Boolean(insurer?.templateLines.some((line) => row.lines.includes(line)));
   return (
     <div className="space-y-3 rounded-xl border border-border/70 p-3">
       <div className="flex items-end gap-2">
@@ -442,7 +515,16 @@ function InsurerRowFields({
             list={`insurers-${row.key}`}
             value={row.insurerName}
             placeholder="e.g. TATA, LIC"
-            onChange={(event) => onChange({ ...row, insurerName: event.target.value })}
+            onChange={(event) => {
+              const insurerName = event.target.value;
+              const match = findInsurer({ ...row, insurerName }, insurers);
+              // Start from the lines the insurer's ready-made catalog covers.
+              onChange({
+                ...row,
+                insurerName,
+                ...(row.linesTouched ? {} : { lines: match?.templateLines ?? [] }),
+              });
+            }}
             className="mt-1 h-11 rounded-xl"
           />
           <datalist id={`insurers-${row.key}`}>
@@ -471,6 +553,11 @@ function InsurerRowFields({
           </Button>
         )}
       </div>
+      <LinePicker
+        idPrefix={`lines-${row.key}`}
+        value={row.lines}
+        onChange={(lines) => onChange({ ...row, lines, linesTouched: true })}
+      />
       <div className="grid grid-cols-2 gap-3">
         <Field
           id={`b-${row.key}`}
@@ -498,7 +585,7 @@ function InsurerRowFields({
             Load all categories and policy names for {insurer.name}
             {!canTemplate && (
               <span className="block text-[11px] text-muted-foreground">
-                No ready-made catalog exists for this insurer; build it in the Catalog page.
+                No ready-made catalog exists for the ticked lines; build it in the Catalog page.
               </span>
             )}
           </span>
@@ -845,22 +932,26 @@ function EditCodesDialog({
 }) {
   const [businessCode, setBusinessCode] = useState("");
   const [licenceCode, setLicenceCode] = useState("");
+  const [lines, setLines] = useState<InsuranceType[]>([]);
   const [lastKey, setLastKey] = useState("");
   const key = state ? `${state.tenant.id}|${state.link.insurerId}` : "";
   if (key !== lastKey) {
     setLastKey(key);
     setBusinessCode(state?.link.businessCode ?? "");
     setLicenceCode(state?.link.licenceCode ?? "");
+    setLines(state?.link.lines ?? []);
   }
-  const valid = businessCode.trim().length >= 2 && licenceCode.trim().length >= 2;
+  const valid =
+    businessCode.trim().length >= 2 && licenceCode.trim().length >= 2 && lines.length > 0;
   const save = useMutation({
     mutationFn: () =>
       platformApi.updateInsurerCodes(state!.tenant.id, state!.link.insurerId, {
         businessCode: businessCode.trim(),
         licenceCode: licenceCode.trim(),
+        lines,
       }),
     onSuccess: () => {
-      toast.success("Codes updated.");
+      toast.success("Insurer updated.");
       onSaved();
       onClose();
     },
@@ -881,7 +972,8 @@ function EditCodesDialog({
               {state?.tenant.name} · {state?.link.name}
             </DialogTitle>
             <DialogDescription>
-              The business and policy-selling licence codes the insurer issued.
+              The business and policy-selling licence codes the insurer issued, and the lines of
+              business the agency sells for it.
             </DialogDescription>
           </DialogHeader>
           <Field
@@ -896,6 +988,7 @@ function EditCodesDialog({
             value={licenceCode}
             onChange={setLicenceCode}
           />
+          <LinePicker idPrefix="edit-lines" value={lines} onChange={setLines} />
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl">
               Cancel

@@ -15,7 +15,27 @@ import type {
 } from "./catalog.schemas.js";
 import type { CatalogTemplate, CategoryTemplate, PolicyTemplate } from "./templates/types.js";
 
-const LINE_ORDER: InsuranceType[] = ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"];
+export const LINE_ORDER: InsuranceType[] = ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"];
+
+/** Lines a tenant sells for an insurer; rows from before lines were recorded mean every line. */
+export const enabledLines = (link: { lines: InsuranceType[] }): InsuranceType[] =>
+  link.lines.length > 0 ? link.lines : LINE_ORDER;
+
+/** Rejects adding to a line of business the tenant has not enabled for that insurer. */
+export async function assertLineEnabled(
+  db: Database,
+  tenantId: string,
+  insurerId: string,
+  line: InsuranceType,
+) {
+  const link = await db.tenantInsurer.findUnique({
+    where: { tenantId_insurerId: { tenantId, insurerId } },
+    select: { lines: true },
+  });
+  if (link && !enabledLines(link).includes(line)) {
+    throw badRequest(`This agency does not sell ${line.toLowerCase()} insurance for this insurer.`);
+  }
+}
 
 // ─── Installing a catalog (tenant activation) ─────────────────────────────────
 
@@ -30,7 +50,7 @@ export function policyCodePrefix(insurerCode: string): string {
 
 const NOISE_WORDS = new Set(["LIFE", "INSURANCE"]);
 
-function makePolicyCode(prefix: string, name: string, used: Set<string>): string {
+export function makePolicyCode(prefix: string, name: string, used: Set<string>): string {
   const slug = name
     .toUpperCase()
     .split(/[^A-Z0-9]+/)
@@ -71,6 +91,15 @@ export async function installCatalog(
   );
   const counts: CatalogCounts = { categories: 0, policies: 0 };
 
+  /** The template's own code when it is free in this tenant, otherwise one made from the name. */
+  const codeFor = (policy: PolicyTemplate) => {
+    if (policy.policyCode && !usedCodes.has(policy.policyCode)) {
+      usedCodes.add(policy.policyCode);
+      return policy.policyCode;
+    }
+    return makePolicyCode(prefix, policy.name, usedCodes);
+  };
+
   async function insertPolicies(
     line: InsuranceType,
     categoryId: string | null,
@@ -82,8 +111,9 @@ export async function installCatalog(
         tenantId,
         insurerId,
         categoryId,
-        policyCode: makePolicyCode(prefix, policy.name, usedCodes),
+        policyCode: codeFor(policy),
         policyName: policy.name,
+        uin: policy.uin ?? "",
         insuranceType: line,
         description: policy.description ?? "",
         coverageAmount: policy.coverageAmount ?? null,
@@ -227,7 +257,8 @@ export async function getCatalogTree(
           .map(toCatalogPolicy);
       const mine = categories.filter((category) => category.insurerId === link.insurerId);
 
-      const lines = LINE_ORDER.map((line) => {
+      const allowed = enabledLines(link);
+      const lines = LINE_ORDER.filter((line) => allowed.includes(line)).map((line) => {
         const roots = mine.filter((category) => category.line === line && !category.parentId);
         return {
           line,
@@ -247,7 +278,8 @@ export async function getCatalogTree(
           })),
           policies: policiesIn(null, line),
         };
-      }).filter((line) => line.categories.length > 0 || line.policies.length > 0);
+        // Admins see an enabled line even while it is empty, so they can start filling it.
+      }).filter((line) => isAdmin(auth) || line.categories.length > 0 || line.policies.length > 0);
 
       return { insurer: link.insurer, businessCode: link.businessCode, lines };
     });
@@ -334,6 +366,7 @@ export async function createCategory(
   const insurerId = parent
     ? parent.insurerId
     : await resolveInsurerId(db, requireTenantId(auth), body.insurerId);
+  await assertLineEnabled(db, requireTenantId(auth), insurerId, body.line);
   await assertNameFree(db, { insurerId, line: body.line, parentId, name: body.name });
 
   const category = await db.$transaction(async (tx) => {

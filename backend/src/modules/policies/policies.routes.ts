@@ -9,14 +9,17 @@ import {
   successSchema,
 } from "../../utils/response.js";
 import {
+  createPoliciesBulkBodySchema,
   createPolicyBodySchema,
   listPoliciesQuerySchema,
   policyIdParamsSchema,
+  policiesBulkCreatedSchema,
   policySchema,
   policyStatusBodySchema,
   updatePolicyBodySchema,
 } from "./policies.schemas.js";
 import {
+  createPoliciesBulk,
   createPolicy,
   deletePolicy,
   getPolicy,
@@ -80,6 +83,24 @@ export const policyRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (request, reply) =>
       reply.code(201).send(ok(await createPolicy(request.db, request, request.body))),
+  );
+
+  app.post(
+    "/bulk",
+    {
+      preHandler: adminOnly,
+      schema: {
+        tags,
+        security,
+        summary: "Add several policies to one category at once (tenant admin)",
+        description:
+          "Each policy needs a name; the policy code is made from the name when left blank and the UIN is optional. Nothing is saved if any row is invalid or already exists in the category.",
+        body: createPoliciesBulkBodySchema,
+        response: { 201: successSchema(policiesBulkCreatedSchema), ...errorResponses },
+      },
+    },
+    async (request, reply) =>
+      reply.code(201).send(ok(await createPoliciesBulk(request.db, request, request.body))),
   );
 
   app.patch(

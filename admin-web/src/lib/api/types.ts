@@ -122,6 +122,8 @@ export interface ApiPolicy {
   id: string;
   policyCode: string;
   policyName: string;
+  /** The insurer's Unique Identification Number; empty when not recorded. */
+  uin?: string;
   insuranceType: InsuranceType;
   description: string;
   insurerId: string;

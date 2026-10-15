@@ -7,6 +7,8 @@ export interface ApiInsurer {
   name: string;
   active: boolean;
   hasCatalogTemplate: boolean;
+  /** Lines of business the built-in starter catalog covers. */
+  templateLines: InsuranceType[];
   tenants: number;
 }
 
@@ -16,6 +18,8 @@ export interface ApiTenantInsurer {
   name: string;
   businessCode: string;
   licenceCode: string;
+  /** Lines of business the agency sells for this insurer. */
+  lines: InsuranceType[];
   /** Policies in this tenant's catalog for the insurer. */
   policies: number;
 }
@@ -38,6 +42,7 @@ export interface TenantInsurerInput {
   insurerId: string;
   businessCode: string;
   licenceCode: string;
+  lines: InsuranceType[];
   catalog: { source: "TEMPLATE" | "NONE" };
 }
 
@@ -90,7 +95,7 @@ export const platformApi = {
   updateInsurerCodes: (
     id: string,
     insurerId: string,
-    body: { businessCode?: string; licenceCode?: string },
+    body: { businessCode?: string; licenceCode?: string; lines?: InsuranceType[] },
   ) =>
     apiRequest<ApiTenant>(`/platform/tenants/${id}/insurers/${insurerId}`, {
       method: "PATCH",

@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Brand } from "@/components/Brand";
 import { TenantLogo } from "@/components/TenantLogo";
 import { MobileBottomNav, type MobileNavItem } from "@/components/mobile/MobileBottomNav";
 import { SidebarToggle } from "@/components/SidebarToggle";
@@ -38,6 +39,7 @@ export function AdminSidebar({ currentPath = "/admin/dashboard", onClose }: Admi
 
   const platformItems = [
     { label: "Tenants", href: "/admin/tenants", icon: Building2 },
+    { label: "Insurer Catalog", href: "/admin/platform-catalog", icon: Layers },
     { label: "Settings", href: "/admin/platform-settings", icon: Settings },
   ];
   const tenantItems = [
@@ -69,7 +71,7 @@ export function AdminSidebar({ currentPath = "/admin/dashboard", onClose }: Admi
         : [];
     });
   const mobilePrimary = isPlatform
-    ? toMobile(["Tenants", "Settings"])
+    ? toMobile(["Tenants", "Insurer Catalog", "Settings"])
     : toMobile(["Dashboard", "Sold Policies", "Agents", "Reports"]).map((item) =>
         item.label === "Sold Policies" ? { ...item, label: "Sold" } : item,
       );
@@ -86,14 +88,14 @@ export function AdminSidebar({ currentPath = "/admin/dashboard", onClose }: Admi
         >
           <Link
             to={isPlatform ? "/admin/tenants" : "/admin/dashboard"}
-            title={compact ? (me?.tenant?.name ?? "InsuroX") : undefined}
+            title={compact ? (me?.tenant?.name ?? "InsuroX Prime") : undefined}
             className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
           >
             <TenantLogo logoUrl={me?.tenant?.logoUrl} name={me?.tenant?.name} size="lg" />
             {!compact && (
               <div className="flex flex-col">
                 <span className="font-display text-sm font-extrabold tracking-tight leading-tight">
-                  {me?.tenant?.name ?? "InsuroX"}
+                  {me?.tenant?.name ?? <Brand />}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
                   Prime Admin

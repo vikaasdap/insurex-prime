@@ -56,6 +56,7 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
           insurerId,
           businessCode: extra.businessCode ?? `BC-${codeFor(name)}`,
           licenceCode: `LIC-${codeFor(name)}`,
+          lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
           ...(extra.catalog ? { catalog: extra.catalog } : {}),
         },
       ],
@@ -221,7 +222,13 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
       legalName: "Nope Pvt Ltd",
       adminEmail: "nope@test.example.com",
       insurers: [
-        { insurerId: aiaId, businessCode: "X1", licenceCode: "X1", catalog: { source: "CUSTOM" } },
+        {
+          insurerId: aiaId,
+          businessCode: "X1",
+          licenceCode: "X1",
+          lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
+          catalog: { source: "CUSTOM" },
+        },
       ],
     });
     expect(missing.status).toBe(400);
@@ -236,6 +243,7 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
           insurerId: aiaId,
           businessCode: "BLANK",
           licenceCode: "BLANK",
+          lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
           catalog: { source: "NONE" },
         },
       ],
@@ -254,7 +262,9 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
       name: "Second",
       legalName: "Second Pvt Ltd",
       adminEmail,
-      insurers: [{ insurerId, businessCode: "SAME", licenceCode: "L2" }],
+      insurers: [
+        { insurerId, businessCode: "SAME", licenceCode: "L2", lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"], },
+      ],
     });
     expect(
       (await call("POST", "/platform/tenants", SUPER, body(aiaId, "s@test.example.com"))).status,
@@ -605,6 +615,7 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
       insurerId: aigId,
       businessCode: "AIG-BC-1",
       licenceCode: "AIG-LIC-1",
+      lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
     });
     expect(added.status).toBe(201);
     expect(added.body.data.catalog).toMatchObject({
@@ -628,6 +639,7 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
           insurerId: aigId,
           businessCode: "OTHER",
           licenceCode: "OTHER",
+          lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
         })
       ).status,
     ).toBe(409);
@@ -638,6 +650,7 @@ describe.skipIf(!hasTestDatabase)("Multi-tenant platform (PostgreSQL integration
           insurerId: aiaId,
           businessCode: "AIG-BC-1",
           licenceCode: "XX",
+          lines: ["LIFE", "HEALTH", "MOTOR", "COMMERCIAL"],
           catalog: { source: "NONE" },
         })
       ).status,

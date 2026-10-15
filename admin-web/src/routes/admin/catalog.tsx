@@ -93,7 +93,14 @@ function CatalogPage() {
         category.subCategories.reduce((sum, sub) => sum + sub.policies.length, 0),
       0,
     );
-  const activeLine = selectedLine ?? lines[0]?.line ?? "LIFE";
+  // Only the lines the agency sells for this insurer.
+  const visibleLines = lines.length
+    ? LINES.filter((line) => lines.some((item) => item.line === line))
+    : LINES;
+  const activeLine =
+    selectedLine && visibleLines.includes(selectedLine)
+      ? selectedLine
+      : (visibleLines[0] ?? "LIFE");
   const current = lineData(activeLine);
 
   const refresh = () => {
@@ -191,7 +198,7 @@ function CatalogPage() {
           )}
 
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Line of business">
-            {LINES.map((line) => {
+            {visibleLines.map((line) => {
               const data = lineData(line);
               const selected = line === activeLine;
               return (

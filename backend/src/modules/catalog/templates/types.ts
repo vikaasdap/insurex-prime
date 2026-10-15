@@ -4,6 +4,10 @@ import type { CategoryDetails } from "../../policies/policies.schemas.js";
 /** A policy name in a catalog. Price, cover and term are optional: they are quoted on the insurer's portal. */
 export interface PolicyTemplate {
   name: string;
+  /** Used as the policy code when given; otherwise one is made from the name. */
+  policyCode?: string;
+  /** The insurer's Unique Identification Number. */
+  uin?: string;
   description?: string;
   coverageAmount?: number;
   premium?: number;

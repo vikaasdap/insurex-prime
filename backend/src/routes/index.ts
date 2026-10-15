@@ -11,6 +11,7 @@ import { authRoutes } from "../modules/auth/auth.routes.js";
 import { catalogRoutes } from "../modules/catalog/catalog.routes.js";
 import { customerRoutes } from "../modules/customers/customers.routes.js";
 import { googleCalendarRoutes } from "../modules/google-calendar/google-calendar.routes.js";
+import { masterCatalogRoutes } from "../modules/catalog/master-catalog.routes.js";
 import { meetingRoutes } from "../modules/meetings/meetings.routes.js";
 import { platformRoutes } from "../modules/platform/platform.routes.js";
 import { policyRoutes } from "../modules/policies/policies.routes.js";
@@ -35,6 +36,7 @@ export const registerRoutes: FastifyPluginAsyncZod = async (app) => {
   await app.register(passwordResetRoutes, { prefix: "/auth/password-reset" });
   await app.register(platformRoutes, { prefix: "/platform" });
   await app.register(catalogRoutes, { prefix: "/catalog" });
+  await app.register(masterCatalogRoutes, { prefix: "/platform/catalog" });
   await app.register(agentRoutes, { prefix: "/agents" });
   await app.register(agentPortalRoutes, { prefix: "/agent" });
   await app.register(agentGoalRoutes, { prefix: "/agent/goals" });

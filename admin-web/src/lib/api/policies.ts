@@ -16,6 +16,22 @@ export interface PolicyListParams extends ListParams {
   premiumMax?: number | undefined;
 }
 
+/** One row of the "add policies" popup. */
+export interface BulkPolicyRow {
+  policyName: string;
+  /** Left blank, it is made from the name. */
+  policyCode?: string;
+  uin?: string;
+}
+
+export interface BulkPoliciesInput {
+  insuranceType: InsuranceType;
+  insurerId: string;
+  /** Null adds the policies directly under the line (no category). */
+  categoryId: string | null;
+  policies: BulkPolicyRow[];
+}
+
 /** Agents receive ACTIVE policies only and cannot change the catalog. */
 export const policiesApi = {
   list: (params?: PolicyListParams) =>
@@ -23,6 +39,11 @@ export const policiesApi = {
   get: (id: string) => apiRequest<ApiPolicy>(`/policies/${id}`),
   create: (input: PolicyInput) =>
     apiRequest<ApiPolicy>("/policies", { method: "POST", body: input }),
+  createMany: (input: BulkPoliciesInput) =>
+    apiRequest<{ created: number; policies: ApiPolicy[] }>("/policies/bulk", {
+      method: "POST",
+      body: input,
+    }),
   update: (id: string, input: Partial<PolicyInput>) =>
     apiRequest<ApiPolicy>(`/policies/${id}`, { method: "PATCH", body: input }),
   setStatus: (id: string, status: PolicyStatus) =>

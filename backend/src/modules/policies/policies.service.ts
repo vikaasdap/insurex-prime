@@ -10,10 +10,16 @@ import { toNullableNumber } from "../../utils/format.js";
 import { buildMeta, toDateFilter, toSkipTake } from "../../utils/pagination.js";
 import { containsInsensitive } from "../../utils/search.js";
 import { changedFields, recordAudit } from "../audit-logs/audit-logs.service.js";
-import { resolveInsurerId } from "../catalog/catalog.service.js";
+import {
+  assertLineEnabled,
+  makePolicyCode,
+  policyCodePrefix,
+  resolveInsurerId,
+} from "../catalog/catalog.service.js";
 import {
   categoryDetailsSchema,
   type CategoryDetails,
+  type createPoliciesBulkBodySchema,
   type createPolicyBodySchema,
   type listPoliciesQuerySchema,
   type updatePolicyBodySchema,
@@ -40,6 +46,7 @@ export const toPolicyDto = (policy: PolicyWithCount, includeSales: boolean) => (
   id: policy.id,
   policyCode: policy.policyCode,
   policyName: policy.policyName,
+  uin: policy.uin,
   insuranceType: policy.insuranceType,
   description: policy.description,
   insurerId: policy.insurerId,
@@ -173,6 +180,7 @@ export async function createPolicy(
     throw badRequest("The category belongs to a different insurer.");
   }
   await assertCategoryFits(db, body.categoryId, body.insuranceType, insurerId);
+  await assertLineEnabled(db, tenantId, insurerId, body.insuranceType);
   const policy = await db.$transaction(async (tx) => {
     const created = await tx.policy.create({
       data: { ...body, tenantId, insurerId, categoryDetails: detailsJson(body.categoryDetails) },
@@ -187,6 +195,88 @@ export async function createPolicy(
     return created;
   });
   return toPolicyDto(policy, true);
+}
+
+/** Adds several policies to one category (or directly to a line) in a single step. */
+export async function createPoliciesBulk(
+  db: Database,
+  request: FastifyRequest,
+  body: z.infer<typeof createPoliciesBulkBodySchema>,
+) {
+  const tenantId = requireTenantId(requireAuth(request));
+  const category = body.categoryId
+    ? await db.policyCategory.findUnique({ where: { id: body.categoryId } })
+    : null;
+  if (body.categoryId && !category) {
+    throw badRequest("categoryId does not refer to a category in this catalog.");
+  }
+  const insurerId = category
+    ? category.insurerId
+    : await resolveInsurerId(db, tenantId, body.insurerId);
+  if (body.insurerId && body.insurerId !== insurerId) {
+    throw badRequest("The category belongs to a different insurer.");
+  }
+  await assertCategoryFits(db, body.categoryId, body.insuranceType, insurerId);
+  await assertLineEnabled(db, tenantId, insurerId, body.insuranceType);
+
+  // The same name twice in the list, or one already in this category, is almost certainly a slip.
+  const names = body.policies.map((item) => item.policyName.toLowerCase());
+  const repeated = names.find((name, index) => names.indexOf(name) !== index);
+  if (repeated) throw conflict(`"${repeated}" is listed twice.`);
+  const present = await db.policy.findMany({
+    where: { tenantId, insurerId, categoryId: body.categoryId ?? null, insuranceType: body.insuranceType },
+    select: { policyName: true },
+  });
+  const clash = present.find((item) => names.includes(item.policyName.toLowerCase()));
+  if (clash) throw conflict(`"${clash.policyName}" already exists in this category.`);
+
+  const insurer = await db.insurer.findUniqueOrThrow({
+    where: { id: insurerId },
+    select: { code: true },
+  });
+  const used = new Set(
+    (await db.policy.findMany({ where: { tenantId }, select: { policyCode: true } })).map(
+      (row) => row.policyCode,
+    ),
+  );
+  const prefix = policyCodePrefix(insurer.code);
+  const rows = body.policies.map((item) => {
+    if (item.policyCode) {
+      if (used.has(item.policyCode)) {
+        throw conflict(`The policy code ${item.policyCode} is already in use.`);
+      }
+      used.add(item.policyCode);
+    }
+    return { ...item, policyCode: item.policyCode ?? makePolicyCode(prefix, item.policyName, used) };
+  });
+
+  const created = await db.$transaction(async (tx) => {
+    const made = [];
+    for (const row of rows) {
+      made.push(
+        await tx.policy.create({
+          data: {
+            tenantId,
+            insurerId,
+            categoryId: body.categoryId ?? null,
+            insuranceType: body.insuranceType,
+            policyCode: row.policyCode,
+            policyName: row.policyName,
+            uin: row.uin,
+          },
+          include: policyInclude,
+        }),
+      );
+    }
+    await recordAudit(tx, request, {
+      action: "policy.bulk_create",
+      entity: "Policy",
+      entityId: made[0]!.id,
+      metadata: { count: made.length, policyCodes: made.map((policy) => policy.policyCode) },
+    });
+    return made;
+  });
+  return { created: created.length, policies: created.map((policy) => toPolicyDto(policy, true)) };
 }
 
 export async function updatePolicy(

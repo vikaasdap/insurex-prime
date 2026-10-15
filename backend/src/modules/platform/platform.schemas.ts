@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TenantStatus } from "../../generated/prisma/enums.js";
+import { InsuranceType, TenantStatus } from "../../generated/prisma/enums.js";
 import {
   orderQuerySchema,
   paginationQuerySchema,
@@ -17,6 +17,9 @@ export const insurerSchema = z
     hasCatalogTemplate: z
       .boolean()
       .describe("A built-in starter catalog exists, so activation can load it"),
+    templateLines: z
+      .array(z.enum(InsuranceType))
+      .describe("Lines of business the built-in starter catalog covers"),
     tenants: z.number().int(),
     createdAt: z.iso.datetime(),
   })
@@ -48,6 +51,7 @@ export const tenantInsurerSchema = z
     name: z.string(),
     businessCode: z.string(),
     licenceCode: z.string(),
+    lines: z.array(z.enum(InsuranceType)).describe("Lines of business sold for this insurer"),
     policies: z.number().int().describe("Policies in this tenant's catalog for the insurer"),
   })
   .meta({ id: "TenantInsurer" });
@@ -106,6 +110,12 @@ export const tenantInsurerInputSchema = z.object({
   insurerId: z.uuid().describe("The insurance company"),
   businessCode,
   licenceCode: businessCode.describe("Policy selling licence code issued by the insurer"),
+  lines: z
+    .array(z.enum(InsuranceType))
+    .min(1, "choose at least one line of business")
+    .max(4)
+    .transform((lines) => [...new Set(lines)])
+    .describe("Lines of business the agency sells for this insurer (life, health, motor, commercial)"),
   catalog: catalogSourceSchema,
 });
 
@@ -145,7 +155,15 @@ export const updateTenantBodySchema = z
   .refine((body) => Object.keys(body).length > 0, "at least one field is required");
 
 export const updateTenantInsurerBodySchema = z
-  .object({ businessCode, licenceCode: businessCode })
+  .object({
+    businessCode,
+    licenceCode: businessCode,
+    lines: z
+      .array(z.enum(InsuranceType))
+      .min(1, "choose at least one line of business")
+      .max(4)
+      .transform((lines) => [...new Set(lines)]),
+  })
   .partial()
   .refine((body) => Object.keys(body).length > 0, "at least one field is required");
 

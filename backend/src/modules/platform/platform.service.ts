@@ -2,19 +2,16 @@ import type { FastifyRequest } from "fastify";
 import type { z } from "zod";
 import type { Database } from "../../config/database.js";
 import type { Prisma } from "../../generated/prisma/client.js";
-import type { TenantStatus } from "../../generated/prisma/enums.js";
+import type { InsuranceType, TenantStatus } from "../../generated/prisma/enums.js";
 import { badRequest, conflict, notFound } from "../../utils/errors.js";
 import { buildMeta, toSkipTake } from "../../utils/pagination.js";
 import { containsInsensitive } from "../../utils/search.js";
 import { changedFields, recordAudit } from "../audit-logs/audit-logs.service.js";
 import { revokeUserSessions } from "../auth/agent-session.js";
 import { generateTemporaryPassword, hashPassword } from "../auth/password.js";
-import { installCatalog } from "../catalog/catalog.service.js";
-import {
-  getCatalogTemplate,
-  hasCatalogTemplate,
-  type CatalogTemplate,
-} from "../catalog/templates/index.js";
+import { enabledLines, installCatalog } from "../catalog/catalog.service.js";
+import { getCatalogTemplate, type CatalogTemplate } from "../catalog/templates/index.js";
+import { masterLinesByInsurer, templateForInsurer } from "../catalog/master-catalog.service.js";
 import type {
   activateTenantBodySchema,
   createInsurerBodySchema,
@@ -32,15 +29,26 @@ type InsurerRecord = Prisma.InsurerGetPayload<{
   include: { _count: { select: { tenantLinks: true } } };
 }>;
 
-const toInsurerDto = (insurer: InsurerRecord) => ({
-  id: insurer.id,
-  code: insurer.code,
-  name: insurer.name,
-  active: insurer.active,
-  hasCatalogTemplate: hasCatalogTemplate(insurer.code),
-  tenants: insurer._count.tenantLinks,
-  createdAt: insurer.createdAt.toISOString(),
-});
+/** Lines the insurer's master catalog covers; an insurer with none yet falls back to a built-in list. */
+const templateLinesFor = (insurer: InsurerRecord, masterLines: Map<string, Set<string>>) => {
+  const fromMaster = masterLines.get(insurer.id);
+  if (fromMaster && fromMaster.size > 0) return [...fromMaster] as InsuranceType[];
+  return [...new Set((getCatalogTemplate(insurer.code) ?? []).map((item) => item.line))];
+};
+
+const toInsurerDto = (insurer: InsurerRecord, masterLines: Map<string, Set<string>>) => {
+  const templateLines = templateLinesFor(insurer, masterLines);
+  return {
+    id: insurer.id,
+    code: insurer.code,
+    name: insurer.name,
+    active: insurer.active,
+    hasCatalogTemplate: templateLines.length > 0,
+    templateLines,
+    tenants: insurer._count.tenantLinks,
+    createdAt: insurer.createdAt.toISOString(),
+  };
+};
 
 const insurerInclude = { _count: { select: { tenantLinks: true } } } as const;
 
@@ -49,7 +57,8 @@ export async function listInsurers(db: Database) {
     include: insurerInclude,
     orderBy: [{ name: "asc" }],
   });
-  return insurers.map(toInsurerDto);
+  const masterLines = await masterLinesByInsurer(db);
+  return insurers.map((insurer) => toInsurerDto(insurer, masterLines));
 }
 
 export async function createInsurer(
@@ -71,7 +80,7 @@ export async function createInsurer(
     });
     return created;
   });
-  return toInsurerDto(insurer);
+  return toInsurerDto(insurer, await masterLinesByInsurer(db));
 }
 
 export async function updateInsurer(
@@ -94,7 +103,7 @@ export async function updateInsurer(
     });
     return updated;
   });
-  return toInsurerDto(insurer);
+  return toInsurerDto(insurer, await masterLinesByInsurer(db));
 }
 
 // ─── Tenants ──────────────────────────────────────────────────────────────────
@@ -122,6 +131,7 @@ const toTenantDto = (tenant: TenantRecord, policiesByInsurer: Map<string, number
     name: link.insurer.name,
     businessCode: link.businessCode,
     licenceCode: link.licenceCode,
+    lines: enabledLines(link),
     policies: policiesByInsurer.get(`${tenant.id}|${link.insurerId}`) ?? 0,
   })),
   status: tenant.status,
@@ -189,7 +199,11 @@ export async function getTenant(db: Database, id: string) {
 type TenantInsurerInput = z.infer<typeof tenantInsurerInputSchema>;
 
 /** Resolves the catalog a new insurer link starts with, reporting what was actually used. */
-function chooseCatalog(insurer: { code: string }, input: TenantInsurerInput) {
+async function chooseCatalog(
+  db: Database,
+  insurer: { id: string; code: string },
+  input: TenantInsurerInput,
+) {
   let source = input.catalog.source;
   let template: CatalogTemplate | undefined;
   if (source === "CUSTOM") {
@@ -198,9 +212,11 @@ function chooseCatalog(insurer: { code: string }, input: TenantInsurerInput) {
     }
     template = input.catalog.lines;
   } else if (source === "TEMPLATE") {
-    template = getCatalogTemplate(insurer.code);
-    if (!template) source = "NONE"; // no built-in catalog for this insurer: start empty
+    template = await templateForInsurer(db, insurer);
+    if (!template) source = "NONE"; // no master catalog for this insurer yet: start empty
   }
+  // Only the lines the agency sells are installed.
+  template = template?.filter((item) => input.lines.includes(item.line));
   return { source, template };
 }
 
@@ -208,12 +224,14 @@ async function loadInsurers(db: Database, inputs: TenantInsurerInput[]) {
   const ids = inputs.map((input) => input.insurerId);
   if (new Set(ids).size !== ids.length) throw badRequest("Each insurer can only be listed once.");
   const insurers = await db.insurer.findMany({ where: { id: { in: ids } } });
-  return inputs.map((input) => {
-    const insurer = insurers.find((item) => item.id === input.insurerId);
-    if (!insurer) throw badRequest("insurerId does not refer to an existing insurer.");
-    if (!insurer.active) throw badRequest(`${insurer.name} is not active.`);
-    return { input, insurer, ...chooseCatalog(insurer, input) };
-  });
+  return Promise.all(
+    inputs.map(async (input) => {
+      const insurer = insurers.find((item) => item.id === input.insurerId);
+      if (!insurer) throw badRequest("insurerId does not refer to an existing insurer.");
+      if (!insurer.active) throw badRequest(`${insurer.name} is not active.`);
+      return { input, insurer, ...(await chooseCatalog(db, insurer, input)) };
+    }),
+  );
 }
 
 async function assertBusinessCodesFree(
@@ -275,6 +293,7 @@ export async function activateTenant(
               insurerId: insurer.id,
               businessCode: input.businessCode,
               licenceCode: input.licenceCode,
+              lines: input.lines,
             },
           });
           const counts = template
@@ -336,6 +355,7 @@ export async function addTenantInsurer(
             insurerId: row!.insurer.id,
             businessCode: body.businessCode,
             licenceCode: body.licenceCode,
+            lines: body.lines,
           },
         });
         const installed = row!.template
@@ -370,9 +390,24 @@ export async function updateTenantInsurer(
 ) {
   const link = await db.tenantInsurer.findUnique({
     where: { tenantId_insurerId: { tenantId, insurerId } },
-    select: { id: true },
+    select: { id: true, lines: true },
   });
   if (!link) throw notFound("Tenant insurer");
+  if (body.lines) {
+    // A line that already has categories or policies cannot be switched off.
+    const removed = enabledLines(link).filter((line) => !body.lines!.includes(line));
+    for (const line of removed) {
+      const [categories, policies] = await Promise.all([
+        db.policyCategory.count({ where: { tenantId, insurerId, line } }),
+        db.policy.count({ where: { tenantId, insurerId, insuranceType: line } }),
+      ]);
+      if (categories + policies > 0) {
+        throw conflict(
+          `${line.toLowerCase()} already has ${categories} categories and ${policies} policies in this catalog; remove them first.`,
+        );
+      }
+    }
+  }
   if (body.businessCode) {
     const taken = await db.tenantInsurer.findFirst({
       where: { insurerId, businessCode: body.businessCode, NOT: { id: link.id } },

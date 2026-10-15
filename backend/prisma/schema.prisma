@@ -115,9 +115,11 @@ model Insurer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenantLinks TenantInsurer[]
-  categories  PolicyCategory[]
-  policies    Policy[]
+  tenantLinks      TenantInsurer[]
+  categories       PolicyCategory[]
+  policies         Policy[]
+  masterCategories MasterCategory[]
+  masterPolicies   MasterPolicy[]
 
   @@map("insurers")
 }
@@ -160,13 +162,16 @@ model Tenant {
 /// The agency's licence with one insurer: the business and policy-selling licence codes the
 /// insurer issued to it.
 model TenantInsurer {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @db.Uuid
-  insurerId    String   @db.Uuid
+  id           String          @id @default(uuid()) @db.Uuid
+  tenantId     String          @db.Uuid
+  insurerId    String          @db.Uuid
   businessCode String
   licenceCode  String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  /// Lines of business (life, health, ...) this tenant sells for the insurer. Empty on rows from
+  /// before this was recorded, which means every line.
+  lines        InsuranceType[] @default([])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   insurer Insurer @relation(fields: [insurerId], references: [id], onDelete: Restrict)
@@ -304,6 +309,8 @@ model Policy {
   categoryId       String?          @db.Uuid
   policyCode       String
   policyName       String
+  /// The insurer's Unique Identification Number for the product (IRDAI "UIN"), when known.
+  uin              String           @default("")
   insuranceType    InsuranceType
   description      String           @default("")
   /// Catalog price/cover/term are optional: many insurer products are quoted on the
@@ -619,4 +626,54 @@ model SystemSetting {
 
   @@index([category])
   @@map("system_settings")
+}
+
+/// The platform's master catalog for an insurer: the categories and sub-categories every agency
+/// selling for that insurer starts from. Edited by the platform owner; copied into a tenant's own
+/// catalog (PolicyCategory) when the tenant is onboarded or synced.
+model MasterCategory {
+  id        String        @id @default(uuid()) @db.Uuid
+  insurerId String        @db.Uuid
+  line      InsuranceType
+  parentId  String?       @db.Uuid
+  name      String
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  insurer  Insurer          @relation(fields: [insurerId], references: [id], onDelete: Cascade)
+  parent   MasterCategory?  @relation("MasterCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children MasterCategory[] @relation("MasterCategoryTree")
+  policies MasterPolicy[]
+
+  @@index([insurerId, line, parentId])
+  @@map("master_categories")
+}
+
+/// A product in the master catalog, copied into each tenant's own Policy list.
+model MasterPolicy {
+  id              String        @id @default(uuid()) @db.Uuid
+  insurerId       String        @db.Uuid
+  /// Null puts the product directly under its line (e.g. a health or motor product).
+  categoryId      String?       @db.Uuid
+  insuranceType   InsuranceType
+  policyCode      String
+  policyName      String
+  uin             String        @default("")
+  description     String        @default("")
+  coverageAmount  Decimal?      @db.Decimal(14, 2)
+  premium         Decimal?      @db.Decimal(12, 2)
+  durationMonths  Int?
+  benefits        String[]
+  categoryDetails Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  insurer  Insurer         @relation(fields: [insurerId], references: [id], onDelete: Cascade)
+  category MasterCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([insurerId, policyCode])
+  @@index([insurerId, insuranceType])
+  @@index([categoryId])
+  @@map("master_policies")
 }

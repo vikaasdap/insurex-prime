@@ -21,6 +21,15 @@ export {
   type ParsedMemo,
 } from "./field-notes";
 export { meetingsApi, type ApiMeeting, type MeetingAgent, type MeetingInput } from "./meetings";
+export {
+  masterCatalogApi,
+  masterCatalogKeys,
+  type MasterCategory,
+  type MasterInsurer,
+  type MasterLine,
+  type MasterPolicy,
+  type MasterSubCategory,
+} from "./master-catalog";
 export { googleCalendarApi, type GoogleCalendarStatus } from "./google-calendar";
 export { pushApi } from "./push";
 export { agentsApi, type AgentInput } from "./agents";
