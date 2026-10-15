@@ -5,8 +5,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service — InsuroX" },
-      { name: "description", content: "The terms for using the InsuroX service." },
+      { title: "Terms of Service — InsuroX Prime" },
+      { name: "description", content: "The terms for using the InsuroX Prime service." },
     ],
   }),
   component: TermsPage,
@@ -17,16 +17,16 @@ function TermsPage() {
     <LegalPage title="Terms of Service">
       <section>
         <p>
-          These terms govern your use of InsuroX, software for insurance agencies and agents. By
-          using InsuroX you agree to them. If you use it on behalf of an agency, you confirm you are
-          allowed to accept these terms for that agency.
+          These terms govern your use of InsuroX Prime, software for insurance agencies and agents.
+          By using InsuroX Prime you agree to them. If you use it on behalf of an agency, you
+          confirm you are allowed to accept these terms for that agency.
         </p>
       </section>
 
       <section>
         <h2>The service</h2>
         <p>
-          InsuroX lets agencies manage customers, policies, sales, receipts, meetings and
+          InsuroX Prime lets agencies manage customers, policies, sales, receipts, meetings and
           follow-ups, and optionally connect a Google Calendar. We may improve, change or
           discontinue features, and will try to give notice of material changes.
         </p>
@@ -45,8 +45,8 @@ function TermsPage() {
         <h2>Acceptable use</h2>
         <ul>
           <li>
-            Use InsuroX only for lawful business purposes and in line with insurance rules that
-            apply to you.
+            Use InsuroX Prime only for lawful business purposes and in line with insurance rules
+            that apply to you.
           </li>
           <li>
             Do not attempt to access other agencies' data, probe or disrupt the service, or misuse
@@ -79,7 +79,7 @@ function TermsPage() {
       <section>
         <h2>Availability and changes</h2>
         <p>
-          We work to keep InsuroX available but do not guarantee uninterrupted or error-free
+          We work to keep InsuroX Prime available but do not guarantee uninterrupted or error-free
           service. We may suspend access that breaks these terms or puts the service or others at
           risk.
         </p>
@@ -88,7 +88,7 @@ function TermsPage() {
       <section>
         <h2>Disclaimer and liability</h2>
         <p>
-          InsuroX is a record-keeping and productivity tool, not insurance, legal or financial
+          InsuroX Prime is a record-keeping and productivity tool, not insurance, legal or financial
           advice. The service is provided "as is". To the extent the law allows, we are not liable
           for indirect or consequential loss, and our total liability is limited to the amount your
           agency paid for the service in the 12 months before the claim.
@@ -98,8 +98,8 @@ function TermsPage() {
       <section>
         <h2>Changes and contact</h2>
         <p>
-          We may update these terms; continuing to use InsuroX after a change means you accept it.
-          Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          We may update these terms; continuing to use InsuroX Prime after a change means you accept
+          it. Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
       </section>
     </LegalPage>

@@ -18,6 +18,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { Brand } from "@/components/Brand";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +34,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toaster } from "@/components/ui/sonner";
 import { AgentLoginForm } from "@/components/auth/AgentLoginForm";
-import { LoginFloatingCards } from "@/components/auth/LoginFloatingCards";
 import { adminPasswordLogin, getAdminSession } from "@/lib/admin-auth";
 import { forgetAgentSignIn, hasAgentSignInHint } from "@/lib/agent-session";
 import { currentUserKey } from "@/hooks/use-current-user";
@@ -237,13 +237,10 @@ function LoginPage() {
             <img src="/insurox-icon.png" alt="" className="size-9 rounded-lg shadow-sm" />
 
             <span className="flex flex-col leading-none">
-              <span className="font-display text-lg font-extrabold tracking-tight">InsuroX</span>
+              <Brand className="font-display text-lg font-extrabold tracking-tight" />
               <span className="mt-1 text-[10px] font-medium tracking-wide text-foreground">
                 A Vikaas Infina Product
               </span>
-            </span>
-            <span className="hidden rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground sm:inline-block">
-              Prime Portal
             </span>
           </a>
           <ThemeToggle />
@@ -252,7 +249,6 @@ function LoginPage() {
 
       {/* Main Content Area */}
       <main className="relative flex flex-1 items-center justify-center px-4 pb-12 pt-28 sm:px-6 sm:pt-32 lg:px-8">
-        <LoginFloatingCards />
         <div className="relative z-10 mx-auto w-full max-w-[510px]">
           {/* Login Card */}
           <div className="w-full">
@@ -267,8 +263,7 @@ function LoginPage() {
                   Welcome Back
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  Select your assigned role to access policy governance, client accounts, and the
-                  InsuroX management portal.
+                  Pick your role to sign in to your InsuroX Prime workspace.
                 </p>
               </div>
 

@@ -76,9 +76,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "InsuroX" },
+      { title: "InsuroX Prime" },
       { name: "description", content: "Simple, secure health and motor insurance management." },
-      { name: "author", content: "InsuroX" },
+      { name: "author", content: "InsuroX Prime" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

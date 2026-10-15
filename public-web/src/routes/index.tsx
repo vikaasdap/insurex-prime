@@ -23,18 +23,19 @@ import {
 } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Brand } from "@/components/Brand";
 import { LOGIN_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "InsuroX — Insurance Made Simple" },
+      { title: "InsuroX Prime — Insurance Made Simple" },
       {
         name: "description",
         content:
           "Secure, streamlined health and motor insurance services for customers, agents, and administrators.",
       },
-      { property: "og:title", content: "InsuroX — Insurance Made Simple" },
+      { property: "og:title", content: "InsuroX Prime — Insurance Made Simple" },
       {
         property: "og:description",
         content: "Secure, streamlined health and motor insurance services.",
@@ -145,11 +146,11 @@ function Index() {
           aria-label="Main navigation"
           className="mx-auto flex h-16 max-w-6xl items-center justify-between rounded-full border border-border/70 bg-background/80 px-4 shadow-nav backdrop-blur-xl sm:px-5"
         >
-          <a href="#top" className="flex items-center gap-2.5" aria-label="InsuroX home">
+          <a href="#top" className="flex items-center gap-2.5" aria-label="InsuroX Prime home">
             <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">
               <ShieldCheck className="size-5" />
             </span>
-            <span className="font-display text-lg font-extrabold">InsuroX</span>
+            <Brand className="font-display text-lg font-extrabold" />
           </a>
           <div className="hidden items-center gap-7 lg:flex">
             {[
@@ -471,7 +472,7 @@ function Index() {
               <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">
                 <ShieldCheck className="size-5" />
               </span>
-              InsuroX
+              <Brand />
             </a>
             <p className="mt-5 max-w-sm text-sm leading-6 text-muted-foreground">
               Simple, secure health and motor insurance management for modern life.
@@ -488,7 +489,9 @@ function Index() {
           </nav>
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-2 pt-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-          <p>© 2026 InsuroX. All rights reserved.</p>
+          <p>
+            © 2026 <Brand />. All rights reserved.
+          </p>
           <p>Protection with clarity.</p>
         </div>
       </footer>

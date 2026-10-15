@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "InsuroX" },
+      { title: "InsuroX Prime" },
       { name: "description", content: "Simple, secure health and motor insurance management." },
-      { name: "author", content: "InsuroX" },
+      { name: "author", content: "InsuroX Prime" },
       // Installed-app look: the status bar matches the app, and iOS opens it full screen.
       { name: "theme-color", content: "#0f172a" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "InsuroX" },
+      { name: "apple-mobile-web-app-title", content: "InsuroX Prime" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black" },
       { name: "format-detection", content: "telephone=no" },
       { property: "og:type", content: "website" },

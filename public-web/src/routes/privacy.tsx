@@ -5,11 +5,11 @@ import { CONTACT_EMAIL } from "@/lib/site";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — InsuroX" },
+      { title: "Privacy Policy — InsuroX Prime" },
       {
         name: "description",
         content:
-          "How InsuroX collects, uses and protects your information, including Google Calendar data.",
+          "How InsuroX Prime collects, uses and protects your information, including Google Calendar data.",
       },
     ],
   }),
@@ -21,10 +21,10 @@ function PrivacyPage() {
     <LegalPage title="Privacy Policy">
       <section>
         <p>
-          InsuroX ("we", "us") provides software that insurance agencies and their agents use to
-          manage customers, policies, sales, meetings and follow-ups. This policy explains what
-          information we handle, why, and the choices you have. It applies to the InsuroX website
-          and the InsuroX agent and admin portals.
+          InsuroX Prime ("we", "us") provides software that insurance agencies and their agents use
+          to manage customers, policies, sales, meetings and follow-ups. This policy explains what
+          information we handle, why, and the choices you have. It applies to the InsuroX Prime
+          website and the InsuroX Prime agent and admin portals.
         </p>
       </section>
 
@@ -37,7 +37,7 @@ function PrivacyPage() {
           </li>
           <li>
             <strong>Agency records:</strong> customer, policy, receipt, sales-goal, meeting and
-            follow-up note information that you or your agency enter into InsuroX.
+            follow-up note information that you or your agency enter into InsuroX Prime.
           </li>
           <li>
             <strong>Usage and device data:</strong> basic logs (such as sign-in times and errors)
@@ -53,9 +53,9 @@ function PrivacyPage() {
       <section>
         <h2>Google Calendar integration</h2>
         <p>
-          InsuroX offers an optional feature that syncs your InsuroX meetings with your own Google
-          Calendar. It is off until you click "Connect Google Calendar" and approve access on
-          Google's consent screen.
+          InsuroX Prime offers an optional feature that syncs your InsuroX Prime meetings with your
+          own Google Calendar. It is off until you click "Connect Google Calendar" and approve
+          access on Google's consent screen.
         </p>
         <p>
           <strong>What we access.</strong> We ask for the Google permission to view and edit events
@@ -65,15 +65,16 @@ function PrivacyPage() {
         </p>
         <p>
           <strong>How we use it.</strong> Only to provide the sync you asked for: meetings you
-          create in InsuroX are added to your Google Calendar, and changes or new events you make in
-          Google Calendar appear in your InsuroX calendar. We do not use your Google data for
-          advertising, do not sell it, and do not use it to train AI or machine-learning models.
+          create in InsuroX Prime are added to your Google Calendar, and changes or new events you
+          make in Google Calendar appear in your InsuroX Prime calendar. We do not use your Google
+          data for advertising, do not sell it, and do not use it to train AI or machine-learning
+          models.
         </p>
         <p>
           <strong>How we store it.</strong> We keep a Google refresh token so sync can continue,
           encrypted at rest. Events imported from Google are stored as meetings in your agency's
-          InsuroX account. Meeting details are visible only to you, the people invited to that
-          meeting, and your agency's administrators, as for any InsuroX meeting.
+          InsuroX Prime account. Meeting details are visible only to you, the people invited to that
+          meeting, and your agency's administrators, as for any InsuroX Prime meeting.
         </p>
         <p>
           <strong>Sharing.</strong> We do not share your Google user data with third parties, except
@@ -86,10 +87,10 @@ function PrivacyPage() {
           token. You can also remove access in your Google Account at{" "}
           <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
           Events already copied to either calendar stay there; to have imported meetings deleted
-          from InsuroX, contact us at the address below.
+          from InsuroX Prime, contact us at the address below.
         </p>
         <p>
-          InsuroX's use and transfer of information received from Google APIs adheres to the{" "}
+          InsuroX Prime's use and transfer of information received from Google APIs adheres to the{" "}
           <a href="https://developers.google.com/terms/api-services-user-data-policy#limited-use">
             Google API Services User Data Policy
           </a>
@@ -100,7 +101,7 @@ function PrivacyPage() {
       <section>
         <h2>How we use information</h2>
         <ul>
-          <li>To run the InsuroX service for your agency and keep your account secure.</li>
+          <li>To run the InsuroX Prime service for your agency and keep your account secure.</li>
           <li>
             To send meeting invitations, follow-up reminders and (if enabled) phone alerts you would
             expect from the service.
@@ -141,7 +142,7 @@ function PrivacyPage() {
 
       <section>
         <h2>Children</h2>
-        <p>InsuroX is a business tool and is not directed to children under 18.</p>
+        <p>InsuroX Prime is a business tool and is not directed to children under 18.</p>
       </section>
 
       <section>

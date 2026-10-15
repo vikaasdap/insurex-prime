@@ -1,3 +1,4 @@
+import { Brand } from "@/components/Brand";
 import { cn } from "@/lib/utils";
 
 interface AppFooterProps {
@@ -14,9 +15,9 @@ export function AppFooter({ tenantName, className }: AppFooterProps) {
         className,
       )}
     >
-      <p>© 2026 {tenantName ?? "InsuroX Prime"}. All rights reserved.</p>
+      <p>© 2026 {tenantName ?? <Brand />}. All rights reserved.</p>
       <p>
-        InsuroX Prime • Powered by{" "}
+        <Brand /> • Powered by{" "}
         <a
           href="https://vikaasinfina.com/"
           target="_blank"

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
+import { Brand } from "@/components/Brand";
 import { LEGAL_UPDATED } from "@/lib/site";
 
 /** Shell for the Privacy Policy and Terms pages: brand header, readable column, footer links. */
@@ -13,7 +14,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
             <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
               <ShieldCheck className="size-4" />
             </span>
-            InsuroX
+            <Brand />
           </Link>
           <Link
             to="/"
@@ -36,7 +37,9 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
 
       <footer className="border-t border-border px-6 py-6 text-xs text-muted-foreground lg:px-10">
         <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:justify-between">
-          <p>© 2026 InsuroX. All rights reserved.</p>
+          <p>
+            © 2026 <Brand />. All rights reserved.
+          </p>
           <nav aria-label="Legal" className="flex gap-4">
             <Link to="/privacy" className="hover:text-foreground">
               Privacy Policy

@@ -106,7 +106,7 @@ export function InstallPrompt() {
       <div className="flex items-start gap-3">
         <img src="/pwa-192.png" alt="" className="size-11 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold">Install InsuroX</p>
+          <p className="text-sm font-bold">Install InsuroX Prime</p>
           {event ? (
             <p className="text-xs text-muted-foreground">
               Open it from your home screen like an app, full screen and faster.
@@ -255,7 +255,7 @@ type PushState = "checking" | "off" | "on" | "blocked" | "unavailable";
 
 const UNAVAILABLE_NOTE: Record<string, string> = {
   server: "Phone alerts aren't set up on the server yet.",
-  ios: "On iPhone, add InsuroX to your Home Screen and open it from there to turn this on.",
+  ios: "On iPhone, add InsuroX Prime to your Home Screen and open it from there to turn this on.",
   browser: "This browser can't show phone alerts.",
   signin: "Sign in again to manage phone alerts.",
 };
@@ -328,7 +328,7 @@ export function PushToggle() {
   const on = state === "on";
   const note =
     state === "blocked"
-      ? "Alerts are blocked. Allow notifications for InsuroX in your phone's or browser's settings."
+      ? "Alerts are blocked. Allow notifications for InsuroX Prime in your phone's or browser's settings."
       : state === "unavailable"
         ? UNAVAILABLE_NOTE[reason]
         : error;

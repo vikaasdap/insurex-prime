@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Brand } from "@/components/Brand";
 import { TenantLogo } from "@/components/TenantLogo";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { SidebarToggle } from "@/components/SidebarToggle";
@@ -59,14 +60,14 @@ export function AgentSidebar({ currentPath, isOpen, onClose }: AgentSidebarProps
           <Link
             to="/agent/dashboard"
             onClick={onClose}
-            title={compact ? (user.tenant?.name ?? "InsuroX") : undefined}
+            title={compact ? (user.tenant?.name ?? "InsuroX Prime") : undefined}
             className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
           >
             <TenantLogo logoUrl={user.tenant?.logoUrl} name={user.tenant?.name} size="lg" />
             {!compact && (
               <div className="flex flex-col">
                 <span className="font-display text-sm font-extrabold leading-tight tracking-tight">
-                  {user.tenant?.name ?? "InsuroX"}
+                  {user.tenant?.name ?? <Brand />}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
                   Agent Workspace
